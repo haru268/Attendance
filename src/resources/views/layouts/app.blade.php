@@ -5,16 +5,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>@yield('title', '勤怠管理アプリ')</title>
+
+
+   <link rel="stylesheet" href="{{ asset('css/sanitize.css') }}">
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/register.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+  <link rel="stylesheet" href="{{ asset('cssattendance.css') }}">
+@stack('styles')
+
+
 </head>
 <body>
-  {{-- 部分テンプレートとして分けたヘッダーを読み込む --}}
   @include('partials.header')
 
-  <main>
+  {{-- ここから追加 --}}
+  <main class="container">
     @yield('content')
   </main>
+  {{-- ここまで追加 --}}
 
   <script src="{{ asset('js/app.js') }}"></script>
+  @stack('scripts')
 </body>
 </html>

@@ -27,7 +27,7 @@
       <nav class="header__nav">
         <ul class="header__nav-list">
           <li class="header__nav-item">
-            <a href="{{ route('attendance') }}">打刻</a>
+            <a href="{{ route('attendance') }}">勤怠</a>
           </li>
           <li class="header__nav-item">
             <a href="{{ route('attendance.list') }}">勤怠一覧</a>
