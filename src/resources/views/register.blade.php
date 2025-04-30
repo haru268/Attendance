@@ -3,6 +3,8 @@
 
 @section('title', '会員登録')
 
+@section('bodyClass', 'auth-page')
+
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/register.css') }}">
 @endpush
@@ -40,7 +42,7 @@
 
     <button type="submit" class="btn-submit">登録する</button>
 
-    <a href="{{ route('login.form') }}" class="btn-login">ログインする</a>
+    <a href="{{ route('login.form') }}" class="btn-login-link">ログインする</a>
   </form>
 </div>
 @endsection

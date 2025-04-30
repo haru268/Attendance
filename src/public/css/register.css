@@ -1,4 +1,4 @@
-/* public/css/register.css */
+
 
 .register-container {
     max-width: 500px;
@@ -60,4 +60,11 @@
     text-align: center;
     text-decoration: none;
     cursor: pointer;
+}
+
+.btn-login-link {
+    color: #007BFF;
+    text-decoration: none;
+    border: none;
+    text-align: center;
 }

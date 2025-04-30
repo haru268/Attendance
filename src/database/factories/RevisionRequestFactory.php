@@ -12,7 +12,6 @@ class RevisionRequestFactory extends Factory
     public function definition()
     {
         return [
-            // テーブルに合わせて 'reason' を使う
             'reason'     => $this->faker->sentence(),
             'status'     => 'pending',
             'created_at' => now(),

@@ -1,0 +1,218 @@
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: #f0eff2;
+    font-family: sans-serif;
+    font-size: 1.1rem;
+}
+
+.detail-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.4rem 1.6rem 4.8rem;
+    box-sizing: border-box;
+    font-weight: bold;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2.4rem;
+}
+
+.detail-header::before {
+    content: "";
+    width: 4px;
+    height: 2rem;
+    background: #000;
+    margin-right: .9rem;
+}
+
+.detail-header h2 {
+    margin: 0;
+    font-size: 1.9rem;
+    color: #333;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.detail-table th,
+.detail-table td {
+    padding: 1.3rem 1.6rem;
+    font-size: 1.05rem;
+}
+
+.detail-table th {
+    width: 7rem;
+    color: #999;
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.detail-table td {
+    color: #000;
+    border-bottom: 1px solid #ccc;
+    padding-left: 7rem;
+}
+
+.detail-table tr:last-child th,
+.detail-table tr:last-child td {
+    border-bottom: none;
+}
+
+.name-last {
+    margin-right: 1.2rem;
+}
+
+.date-wrap .date-year {
+    margin-right: 9.5rem;
+}
+
+.date-wrap span {
+    display: inline-block;
+}
+
+.time-input,
+.time-text {
+    width: 80px;
+    padding: .45rem .6rem;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: normal;
+    color: #000;
+    font-weight: bold ;
+}
+
+.time-input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.time-input[disabled] {
+    border: none;
+    background: transparent;
+}
+
+.tilde {
+    color: #000;
+    margin: 0 .6rem;
+}
+
+.tilde.bold {
+    font-weight: bold;
+}
+
+.remarks-input {
+    width: 65%;
+    max-width: 520px;
+    padding: .65rem 1rem;
+    font-size: .9rem;
+    resize: none;
+    height: 4rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.remarks-text {
+    display: inline-block;
+    font-size: .9rem;
+    line-height: 1.5;
+}
+
+.placeholder {
+    display: inline-block;
+    min-width: 60px;
+    min-height: 1.4rem;
+    color: transparent;
+}
+
+.flex-row {
+    display: flex;
+    align-items: center;
+    gap: 3.6rem;
+}
+
+.readonly-input {
+    border: none;
+    background: transparent;
+    color: #000;
+    cursor: default;
+}
+
+.readonly-input.blank {
+    visibility: hidden;
+}
+
+.tilde.blank {
+    visibility: hidden;
+}
+
+.btn-area {
+    text-align: right;
+    margin-top: 5.5rem;
+}
+
+.btn-area.pending {
+    margin-top: 1.8rem;
+}
+
+.btn-update {
+    padding: .6rem 1.5rem;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: .95rem;
+    cursor: pointer;
+}
+
+.btn-update:hover {
+    opacity: .85;
+}
+
+.pending-note {
+    margin: 0;
+    font-size: .95rem;
+    color: #d32f2f;
+}
+
+.shift-right {
+    padding-left: 7.5rem !important;
+}
+
+@media (min-width:768px) and (max-width:850px) {
+
+    .detail-table td {
+        padding-left: 3rem;
+    }
+
+    .detail-table th,
+    .detail-table td {
+        font-size: .8rem;
+    }
+    .detail-header h2 {
+        font-size: 1.4rem;
+    }
+    .btn-update {
+        font-size: .85rem;
+    }
+    .tilde {
+        margin: 0 .05rem !important;
+    }
+
+    .remarks-input {
+
+        width: 70%;
+        max-width: none;
+
+    }
+}

@@ -12,11 +12,13 @@
   <link rel="stylesheet" href="{{ asset('css/register.css') }}">
   <link rel="stylesheet" href="{{ asset('css/login.css') }}">
   <link rel="stylesheet" href="{{ asset('cssattendance.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/attendance_list.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/stamp_correction_request.css') }}">
 @stack('styles')
 
 
 </head>
-<body>
+<body class="@yield('bodyClass')">
   @include('partials.header')
 
   {{-- ここから追加 --}}

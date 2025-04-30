@@ -11,7 +11,6 @@ class AttendanceFactory extends Factory
 
     public function definition()
     {
-        // 過去30日から今日のランダムな日付
         $date = $this->faker->dateTimeBetween('-30 days', 'now');
 
         return [

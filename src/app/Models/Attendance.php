@@ -21,25 +21,19 @@ class Attendance extends Model
         'clock_out' => 'datetime:H:i',
     ];
 
-    /**
-     * この勤怠を打刻したユーザー
-     */
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * この勤怠の休憩レコード
-     */
+
     public function breakRecords()
     {
         return $this->hasMany(BreakRecord::class);
     }
 
-    /**
-     * この勤怠の修正申請
-     */
+
     public function revisionRequests()
     {
         return $this->hasMany(RevisionRequest::class);

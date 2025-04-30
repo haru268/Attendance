@@ -1,0 +1,146 @@
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f0eff2;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.attendance-list-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+}
+
+.attendance-list-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.attendance-list-header::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 1.75rem;
+    background-color: #000;
+    margin-right: 0.75rem;
+}
+
+.attendance-list-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #333;
+}
+
+.month-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 2rem;
+}
+
+.month-nav a.prev,
+.month-nav a.next {
+    display: flex;
+    align-items: center;
+    color: #999;
+    font-size: 1.5rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.month-nav .nav-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    object-fit: contain;
+    margin-right: 0.5rem;
+}
+
+.month-nav a.next .nav-icon {
+    margin-left: 0.5rem;
+    margin-right: 0;
+    transform: rotate(180deg);
+}
+
+.month-nav .current-month {
+    display: flex;
+    align-items: center;
+    color: #333;
+    font-size: 1.5rem;
+    white-space: nowrap;
+}
+
+.month-nav .current-month .nav-icon {
+    margin-right: 0.5rem;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.attendance-table th,
+.attendance-table td {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.attendance-table th {
+    color: #999;
+    border-bottom: 2px solid #ccc;
+}
+
+.attendance-table tbody tr {
+    border-bottom: 2px solid #ccc;
+}
+
+.attendance-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.attendance-table td {
+    color: #999;
+}
+
+.attendance-table td:last-child {
+    color: #000;
+}
+
+.attendance-table .detail-link {
+    color: #000;
+    text-decoration: none;
+}
+
+@media (max-width: 850px) {
+    .attendance-list-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .month-nav {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .month-nav a.prev,
+    .month-nav a.next,
+    .month-nav .current-month {
+        font-size: 1.25rem;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+}

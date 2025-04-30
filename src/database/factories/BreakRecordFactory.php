@@ -11,7 +11,6 @@ class BreakRecordFactory extends Factory
 
     public function definition()
     {
-        // 勤怠に紐づくとき刻みはシーダー側で決めるのでここは固定でもOK
         return [
             'break_start' => '12:00:00',
             'break_end'   => '12:30:00',

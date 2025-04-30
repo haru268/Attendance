@@ -1,6 +1,5 @@
 <?php
 
-// app/Http/Controllers/AdminAttendanceController.php
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
@@ -19,12 +18,11 @@ class AdminAttendanceController extends Controller
         $nextDate = $selected->copy()->addDay()->format('Y-m-d');
 
         if ($date <= $todayStr) {
-            // 過去／当日の全ユーザー勤怠を取得
             $attendances = Attendance::with('user')
                 ->whereDate('created_at', $date)
                 ->get();
         } else {
-            $attendances = collect(); // 空コレクション
+            $attendances = collect(); 
         }
 
         return view('admin_attendance_list', compact(

@@ -8,7 +8,6 @@ class AttendanceRequest extends FormRequest
 {
     public function authorize()
     {
-        // 認証済みユーザーのみ許可する場合は true のままにします
         return true;
     }
 

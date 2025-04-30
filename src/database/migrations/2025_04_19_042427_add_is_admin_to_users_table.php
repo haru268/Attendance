@@ -9,7 +9,6 @@ class AddIsAdminToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            // パスワードのあとに追加
             $table->boolean('is_admin')->default(false)->after('password');
         });
     }

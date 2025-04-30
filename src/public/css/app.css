@@ -1,4 +1,3 @@
-/* public/css/app.css */
 
 .container {
     width: 90%;
@@ -35,6 +34,10 @@
     text-decoration: none;
     font-size: 1.6rem;
     font-weight: bold;
+}
+
+body.auth-page {
+    background-color: #fff;
 }
 
 @media (min-width: 1400px) and (max-width: 1540px) {

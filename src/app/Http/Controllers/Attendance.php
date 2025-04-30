@@ -11,7 +11,6 @@ class Attendance extends Model
 
     protected $fillable = ['user_id', 'clock_in', 'clock_out', 'remarks'];
 
-    // 最新レコード取得ヘルパー
     public static function latestForUser($userId)
     {
         return static::where('user_id', $userId)

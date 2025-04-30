@@ -9,7 +9,7 @@ class BreakRecord extends Model
 {
     use HasFactory;
 
-    protected $table = 'break_records'; // 休憩テーブル名
+    protected $table = 'break_records'; 
 
     protected $fillable = ['attendance_id', 'start', 'end'];
 

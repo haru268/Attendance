@@ -6,16 +6,6 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Http\Controllers\AttendanceController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes (Dummy Mode)
-|--------------------------------------------------------------------------
-|
-| すべてクロージャまたはダミーコントローラで実装しています。
-| 実際のコントローラが用意できたら適宜差し替えてください。
-|
-*/
-
 // ────────────────────────────────────────────────────
 // ■ 一般ユーザー向けルート
 // ────────────────────────────────────────────────────
@@ -67,7 +57,7 @@ Route::middleware('auth')->group(function () {
         $prevDt = $firstOfMonth->copy()->subMonth();
         $nextDt = $firstOfMonth->copy()->addMonth();
 
-        // 変更後：配列で定義
+        // 配列で定義
         $prev = [
             'year'  => $prevDt->format('Y'),
             'month' => $prevDt->format('m'),
@@ -94,11 +84,12 @@ Route::middleware('auth')->group(function () {
             $attendances = [];
             for ($d = $firstOfMonth->copy(); $d->lte($end); $d->addDay()) {
                 $attendances[] = (object)[
-                    'date'      => $d->copy(),
-                    'clockIn'   => '09:00',
-                    'clockOut'  => '18:00',
-                    'breakTime' => '1:00',
-                    'totalTime' => '8:00',
+                    'id'         => $d->format('Ymd'),
+                    'date'       => $d->copy(),
+                    'clockIn'    => '09:00',
+                    'clockOut'   => '18:00',
+                    'breakTime'  => '1:00',
+                    'totalTime'  => '8:00',
                 ];
             }
         }
@@ -115,9 +106,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/attendance/{id}', [AttendanceController::class, 'detail'])
         ->name('attendance.detail');
 
-    // 修正申請送信（常に「承認待ち」ダミー）
-    Route::post('/attendance/update/{id}', [AttendanceController::class, 'update'])
-        ->name('attendance.update');
+        /* 新) PATCH 専用 ----------------------------*/
+Route::patch('/attendance/update/{id}', [AttendanceController::class,'update'])
+      ->name('attendance.update');
+
+/* あるいは両方受けるなら */
+Route::match(['post','patch'], '/attendance/update/{id}', [AttendanceController::class,'update'])
+      ->name('attendance.update');
 
     // 修正申請一覧（一般ユーザー）
     Route::get('/stamp_correction_request/list', function () {
@@ -164,14 +159,14 @@ Route::middleware('auth')->group(function () {
 
     // 日次勤怠一覧（管理者）
     Route::get('/admin/attendance/list', function () {
-        $date            = request('date', Carbon::today()->format('Y-m-d'));
-        $sel             = Carbon::parse($date);
-        $prevDate        = $sel->copy()->subDay()->format('Y-m-d');
-        $nextDate        = $sel->copy()->addDay()->format('Y-m-d');
-        $attendances     = [];
+        $date        = request('date', Carbon::today()->format('Y-m-d'));
+        $sel         = Carbon::parse($date);
+        $prevDate    = $sel->copy()->subDay()->format('Y-m-d');
+        $nextDate    = $sel->copy()->addDay()->format('Y-m-d');
+        $attendances = [];
 
         if ($sel->lte(Carbon::today())) {
-            $names = ['山田太郎','西伶奈','増田一世','山本敬吉','秋田朋美','中西教夫'];
+            $names = ['山田　太郎','西　伶奈','増田　一世','山本　敬吉','秋田　朋美','中西　教夫'];
             foreach ($names as $i => $n) {
                 $attendances[] = (object)[
                     'id'         => $i + 1,
@@ -198,7 +193,7 @@ Route::middleware('auth')->group(function () {
             'clockOut' => '18:00',
             'breaks'   => [['start' => '12:00', 'end' => '12:30']],
             'remarks'  => '特になし',
-            'user'     => (object)['name' => '山田太郎'],
+            'user'     => (object)['name' => '山田　太郎'],
         ];
         return view('admin_attendance_detail', compact('detail'));
     })->name('admin.attendance.detail');
@@ -206,19 +201,19 @@ Route::middleware('auth')->group(function () {
     // スタッフ一覧（管理者）
     Route::get('/admin/staff/list', function () {
         $staff = [
-            (object)['id'=>1,'name'=>'山田太郎','email'=>'yamada@example.com'],
-            (object)['id'=>2,'name'=>'西伶奈','email'=>'reina@example.com'],
-            (object)['id'=>3,'name'=>'増田一世','email'=>'masuda@example.com'],
-            (object)['id'=>4,'name'=>'山本敬吉','email'=>'yamamoto@example.com'],
-            (object)['id'=>5,'name'=>'秋田朋美','email'=>'akita@example.com'],
-            (object)['id'=>6,'name'=>'中西教夫','email'=>'nakanishi@example.com'],
+            (object)['id'=>1,'name'=>'山田　太郎','email'=>'yamada@example.com'],
+            (object)['id'=>2,'name'=>'西　伶奈','email'=>'reina@example.com'],
+            (object)['id'=>3,'name'=>'増田　一世','email'=>'masuda@example.com'],
+            (object)['id'=>4,'name'=>'山本　敬吉','email'=>'yamamoto@example.com'],
+            (object)['id'=>5,'name'=>'秋田　朋美','email'=>'akita@example.com'],
+            (object)['id'=>6,'name'=>'中西　教夫','email'=>'nakanishi@example.com'],
         ];
         return view('admin_staff_list', compact('staff'));
     })->name('admin.staff.list');
 
     // スタッフ別勤怠一覧（管理者）
     Route::get('/admin/attendance/staff/{id}', function ($id) {
-        $map      = [1=>'山田太郎',2=>'西伶奈',3=>'増田一世',4=>'山本敬吉',5=>'秋田朋美',6=>'中西教夫'];
+        $map      = [1=>'山田　太郎',2=>'西　伶奈',3=>'増田　一世',4=>'山本　敬吉',5=>'秋田　朋美',6=>'中西　教夫'];
         $staff    = (object)['id'=>$id,'name'=>$map[$id] ?? '不明'];
         $today    = Carbon::today();
         $start    = $today->copy()->startOfMonth();
@@ -245,25 +240,55 @@ Route::middleware('auth')->group(function () {
         ));
     })->name('admin.attendance.staff');
 
-    // 修正申請一覧（管理者用）
     Route::get('/admin/stamp_correction_request/list', function () {
-        $revisionRequests = [
-            (object)[
-                'id'             => 1,
-                'status'         => '承認待ち',
-                'targetDatetime' => '2025-04-09 09:00〜18:00',
-                'reason'         => '打刻ミス',
-                'created_at'     => Carbon::today()->subDay(),
-            ],
+    $status = request('status', 'pending');
+    $today  = Carbon::today();
+    $user   = Auth::user();
+
+    $revisionRequests = [];
+
+    // 承認待ちダミー 5 件
+    for ($i = 1; $i <= 5; $i++) {
+        $dateObj = $today->copy()->subDays($i);
+        $revisionRequests[] = (object)[
+            // ↓ ここを「Ymd」で出力する
+            'id'             => $dateObj->format('Ymd'),
+            'status'         => '承認待ち',
+            'targetDatetime' => $dateObj->format('Y-m-d').' 09:00〜18:00',
+            'reason'         => '打刻ミス',
+            'created_at'     => $dateObj,
+            'user'           => (object)['name' => $user->name],
         ];
-        return view('admin_stamp_correction_request_list', compact('revisionRequests'));
-    })->name('admin.revision.list');
+    }
+
+    // 承認済みダミー 5 件
+    for ($i = 6; $i <= 10; $i++) {
+        $dateObj = $today->copy()->subDays($i);
+        $revisionRequests[] = (object)[
+            'id'             => $dateObj->format('Ymd'),
+            'status'         => '承認済み',
+            'targetDatetime' => $dateObj->format('Y-m-d').' 09:00〜18:00',
+            'reason'         => '外出',
+            'created_at'     => $dateObj,
+            'user'           => (object)['name' => $user->name],
+        ];
+    }
+
+    // status で絞り込み
+    $revisionRequests = array_filter($revisionRequests, fn($r) =>
+        $r->status === ($status==='approved' ? '承認済み' : '承認待ち')
+    );
+
+    return view('stamp_correction_request_list', compact('revisionRequests'));
+})->name('admin.revision.list');
+
+
 
     // 修正申請承認画面（管理者用）
     Route::get('/admin/stamp_correction_request/approve/{id}', function ($id) {
         $detail = (object)[
             'id'              => $id,
-            'name'            => '山田太郎',
+            'name'            => '山田　太郎',
             'date'            => Carbon::today()->format('Y-m-d'),
             'workTime'        => '09:00〜18:00',
             'break'           => '1:00',
