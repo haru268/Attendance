@@ -1,9 +1,7 @@
 {{-- resources/views/register.blade.php --}}
 @extends('layouts.app')
 
-@section('title', '会員登録')
-
-@section('bodyClass', 'auth-page')
+@section('title','会員登録')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/register.css') }}">
@@ -11,38 +9,45 @@
 
 @section('content')
 <div class="register-container">
-  {{-- タイトルを追加 --}}
   <h1>会員登録</h1>
 
-  {{-- エラーメッセージ --}}
+  {{-- 全フィールド横断のエラーをまとめて表示したい場合はここに --}}
   @if ($errors->any())
-    <div class="error-messages" style="color:red; margin-bottom:1rem;">
-      <ul>
-        @foreach ($errors->all() as $error)
-          <li>{{ $error }}</li>
-        @endforeach
-      </ul>
-    </div>
+    <ul class="error-list">
+      @foreach ($errors->all() as $e)
+        <li>{{ $e }}</li>
+      @endforeach
+    </ul>
   @endif
 
-  <form method="POST" action="{{ route('register') }}">
+  <form action="{{ route('register') }}" method="POST">
     @csrf
 
-    <label for="name">名前</label>
-    <input type="text" id="name" name="name" value="{{ old('name') }}">
+    {{-- 名前 --}}
+    <label>お名前</label>
+    <input type="text" name="name" value="{{ old('name') }}">
+    @error('name') <span class="error">{{ $message }}</span> @enderror
 
-    <label for="email">メールアドレス</label>
-    <input type="email" id="email" name="email" value="{{ old('email') }}">
+    {{-- メールアドレス --}}
+    <label>メールアドレス</label>
+    <input type="email" name="email" value="{{ old('email') }}">
+    @error('email') <span class="error">{{ $message }}</span> @enderror
 
-    <label for="password">パスワード</label>
-    <input type="password" id="password" name="password">
+    {{-- パスワード --}}
+    <label>パスワード</label>
+    <input type="password" name="password">
+    @error('password') <span class="error">{{ $message }}</span> @enderror
 
-    <label for="password_confirmation">パスワード確認</label>
-    <input type="password" id="password_confirmation" name="password_confirmation">
+    {{-- パスワード（確認） --}}
+    <label>パスワード（確認）</label>
+    <input type="password" name="password_confirmation">
+    @error('password_confirmation') <span class="error">{{ $message }}</span> @enderror
 
-    <button type="submit" class="btn-submit">登録する</button>
-
-    <a href="{{ route('login.form') }}" class="btn-login-link">ログインする</a>
+    <button type="submit" class="btn-primary">登録</button>
   </form>
+
+  <p class="link-to-login">
+    <a href="{{ route('login.form') }}">ログインはこちら</a>
+  </p>
 </div>
 @endsection

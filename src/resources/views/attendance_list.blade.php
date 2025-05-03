@@ -16,20 +16,18 @@
 
   {{-- 月切り替えナビ --}}
   <div class="month-nav">
-    <a href="{{ route('attendance.list', ['year'=>$prev['year'], 'month'=>$prev['month']]) }}" class="prev">
-      <img src="{{ asset('img/arrow.png.png') }}" alt="先月" class="nav-icon">
-      先月
-    </a>
+    <a href="{{ route('attendance.list', ['year' => $prev->year, 'month' => $prev->month]) }}" class="prev">
+    先月
+</a>
 
     <span class="current-month">
       <img src="{{ asset('img/calendar.png.png') }}" alt="カレンダー" class="nav-icon">
       {{ $currentMonth }}
     </span>
 
-    <a href="{{ route('attendance.list', ['year'=>$next['year'], 'month'=>$next['month']]) }}" class="next">
-      翌月
-      <img src="{{ asset('img/arrow.png.png') }}" alt="翌月" class="nav-icon rotated">
-    </a>
+    <a href="{{ route('attendance.list', ['year' => $next->year, 'month' => $next->month]) }}" class="next">
+    翌月
+</a>
   </div>
 
   @if($noRecords)

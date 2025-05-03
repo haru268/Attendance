@@ -1,11 +1,11 @@
+{{-- resources/views/login.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'ログイン')
-
-@section('bodyClass', 'auth-page')
+@section('title','ログイン')
+@section('bodyClass','auth-page')
 
 @push('styles')
-  <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+<link rel="stylesheet" href="{{ asset('css/login.css') }}">
 @endpush
 
 @section('content')
@@ -14,16 +14,17 @@
 
   <form action="{{ route('login') }}" method="POST">
     @csrf
-    <div>
-      <label>メールアドレス</label>
-      <input type="email" name="email" value="{{ old('email') }}">
-      @error('email')<p class="error">{{ $message }}</p>@enderror
-    </div>
-    <div>
-      <label>パスワード</label>
-      <input type="password" name="password">
-      @error('password')<p class="error">{{ $message }}</p>@enderror
-    </div>
+
+    {{-- メールアドレス --}}
+    <label>メールアドレス</label>
+    <input type="email" name="email" value="{{ old('email') }}">
+    @error('email') <span class="error">{{ $message }}</span> @enderror
+
+    {{-- パスワード --}}
+    <label>パスワード</label>
+    <input type="password" name="password">
+    @error('password') <span class="error">{{ $message }}</span> @enderror
+
     <button type="submit" class="btn-login">ログイン</button>
   </form>
 

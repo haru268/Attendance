@@ -22,8 +22,6 @@ class AttendanceRequest extends FormRequest
             'breakStart.*'  => 'nullable|date_format:H:i|after_or_equal:clockIn|before_or_equal:clockOut',
             'breakEnd.*'    => 'nullable|date_format:H:i|after_or_equal:breakStart.*|before_or_equal:clockOut',
 
-            // 備考
-            'remarks'       => 'required|string|max:255',
         ];
     }
 
@@ -47,8 +45,6 @@ class AttendanceRequest extends FormRequest
 
             // 備考
             'remarks.required'      => '備考を記入してください。',
-            'remarks.string'        => '備考は文字列で入力してください。',
-            'remarks.max'           => '備考は255文字以内で入力してください。',
         ];
     }
 }

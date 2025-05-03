@@ -7,23 +7,20 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    /* 打刻トップ ------------------------------------------------------- */
     public function index()
     {
         return view('attendance');
     }
 
+    /* 勤怠詳細 --------------------------------------------------------- */
     public function detail($id)
     {
-        $dateObj = \Carbon\Carbon::createFromFormat('Ymd', $id);
+        $dateObj = Carbon::parse($id);   // 例: 20250502
 
-        $breaks = $dateObj->day % 2
-            ? [['start'=>'12:00','end'=>'13:00']]
-            : [['start'=>'12:00','end'=>'12:45'],['start'=>'15:00','end'=>'15:15']];
-
-        $user = (object)[
-            'last_name'  => '山田',
-            'first_name' => '太郎',
-            'name'       => '山田 太郎',
+        /* ★ ここを “常に 1 行” に固定 -------------- */
+        $breaks = [
+            ['start' => '12:00', 'end' => '13:00'],   // 休憩1 行だけ
         ];
 
         $detail = (object)[
@@ -31,25 +28,31 @@ class AttendanceController extends Controller
             'date'     => $dateObj->toDateString(),
             'clockIn'  => '09:00',
             'clockOut' => '18:00',
-            'breaks'   => $breaks,
+            'breaks'   => $breaks,                    // ← 1 行渡す
             'remarks'  => '特になし',
-            'user'     => $user,
+            'user'     => (object)[
+                'last_name'  => '山田',
+                'first_name' => '太郎',
+            ],
         ];
 
+        /* 承認待ちかどうかの判定は view 側で session を見るだけ。
+           ここでは break 行を増減させない */
         return view('attendance_detail', compact('detail'));
     }
 
+    /* 更新 ------------------------------------------------------------- */
     public function update(Request $request, $id)
     {
         $request->validate([
-            'clock_in'  => ['required','date_format:H:i'],
-            'clock_out' => ['required','date_format:H:i','after:clock_in'],
-            'breaks.*.start' => ['nullable','date_format:H:i'],
-            'breaks.*.end'   => ['nullable','date_format:H:i','after:breaks.*.start'],
-            'remarks'   => ['nullable','string','max:255'],
+            'clock_in'          => ['required', 'date_format:H:i'],
+            'clock_out'         => ['required', 'date_format:H:i', 'after:clock_in'],
+            'breaks.*.start'    => ['nullable', 'date_format:H:i'],
+            'breaks.*.end'      => ['nullable', 'date_format:H:i', 'after:breaks.*.start'],
+            'remarks'           => ['nullable', 'string', 'max:255'],
         ]);
 
-        return back()->with('pending', true);
-
+        /* ここで実際は保存 → 今はダミーでメッセージだけ */
+        return back()->with('success', '更新しました（ダミー保存）');
     }
 }
