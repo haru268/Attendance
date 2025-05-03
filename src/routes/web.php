@@ -19,7 +19,7 @@ Route::post('/register', fn() => redirect('/login')->with('success', '登録が�
     ->name('register');
 
 // ログインフォーム
-Route::get('/login', fn() => view('login'))
+Route::get('/login', fn() => view('login')) 
     ->name('login.form');
 
 // ログイン処理（ダミー認証）
@@ -211,34 +211,43 @@ Route::middleware('auth')->group(function () {
         return view('admin_staff_list', compact('staff'));
     })->name('admin.staff.list');
 
-    // スタッフ別勤怠一覧（管理者）
-    Route::get('/admin/attendance/staff/{id}', function ($id) {
-        $map      = [1=>'山田　太郎',2=>'西　伶奈',3=>'増田　一世',4=>'山本　敬吉',5=>'秋田　朋美',6=>'中西　教夫'];
-        $staff    = (object)['id'=>$id,'name'=>$map[$id] ?? '不明'];
-        $today    = Carbon::today();
-        $start    = $today->copy()->startOfMonth();
-        $attendances = [];
+    /* スタッフ別勤怠一覧（管理者） */
+Route::get('/admin/attendance/staff/{id}', function ($id) {
 
-        for ($d = $start; $d->lte($today); $d->addDay()) {
-            $attendances[] = (object)[
-                'id'         => $d->day,
-                'created_at' => $d,
-                'clockIn'    => '09:00',
-                'clockOut'   => '18:00',
-                'breakTime'  => '1:00',
-                'totalTime'  => '8:00',
-                'user'       => $staff,
-            ];
-        }
+    /* ▼ 変更①: クエリ ?date=YYYY-MM-01 を尊重 ----------------------------- */
+    $sel = \Carbon\Carbon::parse(request('date', now()));        // ← ここを追加
+    $firstOfMonth = $sel->copy()->startOfMonth();               // 月初
+    $today        = \Carbon\Carbon::today();
 
-        $prevDate           = $start->copy()->subMonth()->format('Y-m-d');
-        $nextDate           = $start->copy()->addMonth()->format('Y-m-d');
-        $currentDateDisplay = $today->format('Y/m');
+    /* 対象スタッフ */
+    $nameMap = [1=>'山田太郎',2=>'西伶奈',3=>'増田一世',4=>'山本敬吉',5=>'秋田朋美',6=>'中西教夫'];
+    $staff   = (object)['id'=>$id,'name'=>$nameMap[$id] ?? '不明'];
 
-        return view('admin_attendance_staff', compact(
-            'staff', 'attendances', 'prevDate', 'nextDate', 'currentDateDisplay'
-        ));
-    })->name('admin.attendance.staff');
+    /* ▼ 変更②: 月初〜月末まで日付を正しく生成 --------------------------- */
+    $end = $firstOfMonth->copy()->endOfMonth()->min($today);    // 未来分は除外
+    $attendances = [];
+    for($d=$firstOfMonth->copy(); $d->lte($end); $d->addDay()){
+        $attendances[] = (object)[
+            'id'         => $d->format('Ymd'),
+            'created_at' => $d->copy(),
+            'clockIn'    => '09:00',
+            'clockOut'   => '18:00',
+            'breakTime'  => '1:00',
+            'totalTime'  => '8:00',
+            'user'       => $staff,
+        ];
+    }
+
+    /* ▼ 変更③: 前月・翌月リンク用の日付を計算 --------------------------- */
+    $prevDate = $firstOfMonth->copy()->subMonth()->format('Y-m-01');
+    $nextDate = $firstOfMonth->copy()->addMonth()->format('Y-m-01');
+    $currentDateDisplay = $firstOfMonth->format('Y/m');
+
+    return view('admin_attendance_staff', compact(
+        'staff', 'attendances', 'prevDate', 'nextDate', 'currentDateDisplay'
+    ));
+})->name('admin.attendance.staff');
+
 
     Route::get('/admin/stamp_correction_request/list', function () {
     $status = request('status', 'pending');

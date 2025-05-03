@@ -1,50 +1,47 @@
-{{-- resources/views/admin_login.blade.php --}}
+{{-- 管理者ログイン画面 --}}
 @extends('layouts.app')
 
 @section('title', '管理者ログイン')
 
-@section('content')
-  <div class="login-container">
-    <h2>管理者ログイン</h2>
+{{-- 背景を真っ白にするクラスを body に付与 --}}
+@section('bodyClass', 'adminlogin-page')
 
-    @if(session('error'))
-      <div class="error" style="color: red; margin-bottom: 1rem;">
-        {{ session('error') }}
-      </div>
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/admin_login.css') }}">
+@endpush
+
+@section('content')
+<div class="adminlogin-container">
+    <h1>管理者ログイン</h1>
+
+    {{-- 認証失敗メッセージ --}}
+    @if (session('error'))
+        <p class="adminlogin-error">{{ session('error') }}</p>
     @endif
 
-    <form method="POST" action="{{ route('admin.login') }}">
-      @csrf
+    <form action="{{ route('admin.login') }}" method="POST">
+        @csrf
 
-      <div class="form-group">
-        <label for="email">メールアドレス</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value="{{ old('email') }}"
-          required
-          autofocus
-        >
-        @error('email')
-          <div class="error" style="color: red;">{{ $message }}</div>
-        @enderror
-      </div>
+        {{-- メールアドレス --}}
+        <div class="adminlogin-form-group">
+            <label for="email">メールアドレス</label>
+            <input id="email" type="email" name="email"
+                   value="{{ old('email') }}" required autofocus>
+            @error('email')
+                <p class="adminlogin-error">{{ $message }}</p>
+            @enderror
+        </div>
 
-      <div class="form-group">
-        <label for="password">パスワード</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          required
-        >
-        @error('password')
-          <div class="error" style="color: red;">{{ $message }}</div>
-        @enderror
-      </div>
+        {{-- パスワード --}}
+        <div class="adminlogin-form-group">
+            <label for="password">パスワード</label>
+            <input id="password" type="password" name="password" required>
+            @error('password')
+                <p class="adminlogin-error">{{ $message }}</p>
+            @enderror
+        </div>
 
-      <button type="submit">ログイン</button>
+        <button type="submit" class="adminlogin-btn-login">管理者ログインする</button>
     </form>
-  </div>
+</div>
 @endsection

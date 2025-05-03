@@ -1,0 +1,151 @@
+/* ========== 管理者：日次勤怠一覧 (admin_attendance_list.css) ========== */
+
+/* 共通 -------------------------------------------------------------- */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: #f0eff2;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.adminatt-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+}
+
+/* 見出し ------------------------------------------------------------ */
+.adminatt-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.adminatt-bar {
+    display: inline-block;
+    width: 4px;
+    height: 1.75rem;
+    background: #000;
+    margin-right: .75rem;
+}
+
+.adminatt-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #333;
+}
+
+/* 日付ナビ (白カード) ---------------------------------------------- */
+.adminatt-daybox {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    margin-bottom: 2rem;
+}
+
+.adminatt-daylink {
+    display: flex;
+    align-items: center;
+    color: #999;
+    font-size: 1.4rem;
+    text-decoration: none;
+}
+
+.adminatt-nav-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    object-fit: contain;
+    margin-right: .5rem;
+}
+
+.adminatt-daylink.next .adminatt-nav-icon {
+    margin-left: .5rem;
+    margin-right: 0;
+    transform: rotate(180deg);
+}
+
+.adminatt-daybox-date {
+    display: flex;
+    align-items: center;
+    color: #333;
+    font-size: 1.4rem;
+    white-space: nowrap;
+}
+
+.adminatt-daybox-date .adminatt-nav-icon {
+    margin-right: .5rem;
+}
+
+/* テーブル ---------------------------------------------------------- */
+.adminatt-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.adminatt-table th,
+.adminatt-table td {
+    padding: .75rem 1rem;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.adminatt-table th {
+    color: #999;
+    border-bottom: 2px solid #ccc;
+}
+
+.adminatt-table tbody tr {
+    border-bottom: 2px solid #ccc;
+}
+
+.adminatt-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.adminatt-table td {
+    color: #999;
+}
+
+.adminatt-table td:last-child {
+    color: #000;
+}
+
+.adminatt-link {
+    color: #000;
+    text-decoration: none;
+}
+
+.adminatt-link:hover {
+    opacity: .8;
+}
+
+/* レスポンシブ ------------------------------------------------------ */
+@media(max-width:850px) {
+    .adminatt-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .adminatt-daybox {
+        padding: .6rem .8rem;
+    }
+
+    .adminatt-daylink,
+    .adminatt-daybox-date {
+        font-size: 1.2rem;
+    }
+
+    .adminatt-table th,
+    .adminatt-table td {
+        padding: .5rem .75rem;
+        font-size: .9rem;
+    }
+}

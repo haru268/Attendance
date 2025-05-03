@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="{{ asset('cssattendance.css') }}">
   <link rel="stylesheet" href="{{ asset('css/attendance_list.css') }}">
   <link rel="stylesheet" href="{{ asset('css/stamp_correction_request.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/admin_login.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/admin_attendance_list.css') }}">
 @stack('styles')
 
 

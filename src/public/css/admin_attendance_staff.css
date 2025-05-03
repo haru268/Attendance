@@ -1,0 +1,154 @@
+/* ============== 管理者：スタッフ月次勤怠一覧 (admin_attendance_staff.css) ============== */
+/* ほかの管理者ページ (adminatt- / adminstaff-) とはクラス名が衝突しません              */
+/* ===================================================================================== */
+
+/* 全体 ------------------------------------------------------------------------------ */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: #f0eff2;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+/* コンテナ -------------------------------------------------------------------------- */
+.adminattstaff-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+}
+
+/* 見出し --------------------------------------------------------------------------- */
+.adminattstaff-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.adminattstaff-bar {
+    width: 4px;
+    height: 1.75rem;
+    background: #000;
+    margin-right: .75rem;
+}
+
+.adminattstaff-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #333;
+}
+
+/* 月ナビ (白カード) ----------------------------------------------------------------- */
+.adminattstaff-monthbox {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    margin-bottom: 2rem;
+}
+
+.adminattstaff-monthlink {
+    display: flex;
+    align-items: center;
+    color: #999;
+    font-size: 1.4rem;
+    text-decoration: none;
+}
+
+.adminattstaff-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    object-fit: contain;
+    margin-right: .5rem;
+}
+
+.adminattstaff-monthlink.next .adminattstaff-icon {
+    margin-left: .5rem;
+    margin-right: 0;
+    transform: rotate(180deg);
+}
+
+.adminattstaff-monthbox-date {
+    display: flex;
+    align-items: center;
+    color: #333;
+    font-size: 1.4rem;
+    white-space: nowrap;
+}
+
+.adminattstaff-monthbox-date .adminattstaff-icon {
+    margin-right: .5rem;
+}
+
+/* テーブル ------------------------------------------------------------------------- */
+.adminattstaff-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.adminattstaff-table th,
+.adminattstaff-table td {
+    padding: .75rem 1rem;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.adminattstaff-table th {
+    color: #999;
+    border-bottom: 2px solid #ccc;
+}
+
+.adminattstaff-table tbody tr {
+    border-bottom: 2px solid #ccc;
+}
+
+.adminattstaff-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.adminattstaff-table td {
+    color: #999;
+}
+
+.adminattstaff-table td:last-child {
+    color: #000;
+}
+
+/* 詳細リンク ----------------------------------------------------------------------- */
+.adminattstaff-link {
+    color: #000;
+    text-decoration: none;
+}
+
+.adminattstaff-link:hover {
+    opacity: .8;
+}
+
+/* レスポンシブ --------------------------------------------------------------------- */
+@media(max-width:850px) {
+    .adminattstaff-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .adminattstaff-monthbox {
+        padding: .6rem .8rem;
+    }
+
+    .adminattstaff-monthlink,
+    .adminattstaff-monthbox-date {
+        font-size: 1.2rem;
+    }
+
+    .adminattstaff-table th,
+    .adminattstaff-table td {
+        padding: .5rem .75rem;
+        font-size: .9rem;
+    }
+}

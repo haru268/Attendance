@@ -11,7 +11,7 @@
     $dt        = \Carbon\Carbon::parse($detail->date);
     $isPending = session('pending', false);
     // 実データの休憩のみ使用
-    $breaks    = $detail->breaks ?? [];
+    $breaks = array_slice($detail->breaks ?? [], 0, 1);
 @endphp
 
 <div class="detail-container">
