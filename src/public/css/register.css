@@ -1,20 +1,33 @@
+/* ─────────────────────────────── */
+/* 会員登録ページ専用スタイル         */
+/* ─────────────────────────────── */
 
+/* ページ全体を白背景に */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    font-family: sans-serif;
+}
 
+/* コンテナ */
 .register-container {
     max-width: 500px;
     margin: 4rem auto 2rem;
     padding: 2rem 1rem;
     box-sizing: border-box;
-    border: none;
-    border-radius: 6px;
 }
 
+/* 見出し */
 .register-container h1 {
     text-align: center;
     font-size: 2rem;
     margin-bottom: 2rem;
+    font-weight: bold;
 }
 
+/* フォームレイアウト */
 .register-container form {
     display: flex;
     flex-direction: column;
@@ -32,39 +45,55 @@
     margin-bottom: 1.5rem;
     border: 1px solid #333;
     border-radius: 4px;
-    box-sizing: border-box;
     font-size: 1.125rem;
+    box-sizing: border-box;
 }
 
-.register-container .btn-submit {
+/* 登録ボタン */
+.btn-submit {
     width: 100%;
     padding: 0.75rem 1rem;
-    margin: 2rem 0 1rem;
     background-color: #000;
     color: #fff;
     border: none;
     border-radius: 4px;
     font-size: 1.125rem;
     cursor: pointer;
+    margin-top: 1rem;
 }
 
-.register-container .btn-login {
-    display: inline-block;
-    width: 100%;
-    padding: 0.5rem 1rem;
-    background-color: #fff;
-    color: #007bff;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.875rem;
+/* 「ログインはこちら」リンク */
+.link-to-login {
     text-align: center;
-    text-decoration: none;
-    cursor: pointer;
+    margin-top: 1rem;
 }
 
-.btn-login-link {
+.link-to-login a {
     color: #007BFF;
     text-decoration: none;
-    border: none;
-    text-align: center;
+}
+
+.link-to-login a:hover {
+    text-decoration: underline;
+}
+
+/* 全体エラーリスト */
+.error-list {
+    margin-bottom: 1rem;
+    color: #d32f2f;
+    list-style: none;
+    padding-left: 0;
+}
+
+.error-list li {
+    margin-bottom: 0.25rem;
+}
+
+/* 個別エラーメッセージ */
+.error {
+    display: block;
+    margin-top: -0.75rem;
+    margin-bottom: 1rem;
+    color: #d32f2f;
+    font-size: 0.875rem;
 }

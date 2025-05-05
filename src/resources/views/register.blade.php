@@ -11,7 +11,7 @@
 <div class="register-container">
   <h1>会員登録</h1>
 
-  {{-- 全フィールド横断のエラーをまとめて表示したい場合はここに --}}
+  {{-- 全フィールド横断のエラー --}}
   @if ($errors->any())
     <ul class="error-list">
       @foreach ($errors->all() as $e)
@@ -23,27 +23,23 @@
   <form action="{{ route('register') }}" method="POST">
     @csrf
 
-    {{-- 名前 --}}
-    <label>お名前</label>
-    <input type="text" name="name" value="{{ old('name') }}">
+    <label for="name">名前</label>
+    <input id="name" type="text" name="name" value="{{ old('name') }}">
     @error('name') <span class="error">{{ $message }}</span> @enderror
 
-    {{-- メールアドレス --}}
-    <label>メールアドレス</label>
-    <input type="email" name="email" value="{{ old('email') }}">
+    <label for="email">メールアドレス</label>
+    <input id="email" type="email" name="email" value="{{ old('email') }}">
     @error('email') <span class="error">{{ $message }}</span> @enderror
 
-    {{-- パスワード --}}
-    <label>パスワード</label>
-    <input type="password" name="password">
+    <label for="password">パスワード</label>
+    <input id="password" type="password" name="password">
     @error('password') <span class="error">{{ $message }}</span> @enderror
 
-    {{-- パスワード（確認） --}}
-    <label>パスワード（確認）</label>
-    <input type="password" name="password_confirmation">
+    <label for="password_confirmation">パスワード確認</label>
+    <input id="password_confirmation" type="password" name="password_confirmation">
     @error('password_confirmation') <span class="error">{{ $message }}</span> @enderror
 
-    <button type="submit" class="btn-primary">登録</button>
+    <button type="submit" class="btn-submit">登録する</button>
   </form>
 
   <p class="link-to-login">
