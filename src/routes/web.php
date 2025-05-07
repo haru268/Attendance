@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User; 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -23,10 +24,19 @@ use App\Http\Requests\AdminRevisionRequest;
 Route::get('/register', fn() => view('register'))
     ->name('register.form');
 
-/* 会員登録処理：完了後に打刻画面へリダイレクト */
+/* 会員登録処理：ユーザー作成→自動ログイン→打刻画面へ */
 Route::post('/register', function (RegisterRequest $request) {
-    // $request->validated() で安全な入力が取れています
-    // （Fortify 等でユーザー作成＆自動ログインに置き換えてもOK）
+    // ① 新規ユーザーを作成
+    $user = User::create([
+        'name'     => $request->name,
+        'email'    => $request->email,
+        'password' => bcrypt($request->password),
+    ]);
+
+    // ② 作成したユーザーでログイン
+    Auth::login($user);
+
+    // ③ 打刻トップへリダイレクト
     return redirect()->route('attendance')
                      ->with('success', '登録が完了しました。');
 })->name('register');
