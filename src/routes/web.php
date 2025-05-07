@@ -19,24 +19,29 @@ use App\Http\Requests\AdminRevisionRequest;
    ■ 一般ユーザー向けルート
    ===================================================================== */
 
-/* 会員登録 */
-Route::get('/register', fn() => view('register'))->name('register.form');
+/* 会員登録フォーム */
+Route::get('/register', fn() => view('register'))
+    ->name('register.form');
 
+/* 会員登録処理：完了後に打刻画面へリダイレクト */
 Route::post('/register', function (RegisterRequest $request) {
-    // $request->validated() で安全な入力が取れる
-    // ※Fortify 等でユーザー作成→ログインに差し替え可
-    return redirect('/login')->with('success', '登録が完了しました。');
+    // $request->validated() で安全な入力が取れています
+    // （Fortify 等でユーザー作成＆自動ログインに置き換えてもOK）
+    return redirect()->route('attendance')
+                     ->with('success', '登録が完了しました。');
 })->name('register');
 
-/* ログイン */
-Route::get('/login', fn() => view('login'))->name('login.form');
+/* ログインフォーム */
+Route::get('/login', fn() => view('login'))
+    ->name('login.form');
 
+/* ログイン処理 */
 Route::post('/login', function (LoginRequest $request) {
 
-    $credentials = $request->only('email','password');          // すでにバリデ済
+    $credentials = $request->only('email','password');  // バリデーション済み
     if (Auth::attempt($credentials)) {
 
-        /* 管理者アカウントをブロック */
+        // 管理者アカウントは一般画面へ入れない
         if (Auth::user()->is_admin) {
             Auth::logout();
             return back()
@@ -44,20 +49,22 @@ Route::post('/login', function (LoginRequest $request) {
                    ->withInput();
         }
 
+        // 認証成功 → 打刻画面へ
         return redirect()->route('attendance');
     }
 
+    // 認証失敗
     return back()
            ->withErrors(['email' => '認証に失敗しました。'])
            ->withInput();
 })->name('login');
 
-/* 認証必須エリア（一般） */
+/* 認証必須エリア（一般ユーザー） */
 Route::middleware('auth')->group(function () {
 
     /* 打刻トップ */
     Route::get('/attendance', [AttendanceController::class,'index'])
-          ->name('attendance');
+         ->name('attendance');
 
     /* 月次勤怠一覧（ダミー） */
     Route::get('/attendance/list', function (Request $request) {
@@ -67,14 +74,21 @@ Route::middleware('auth')->group(function () {
         $first  = Carbon::create($year,$month,1);
         $today  = Carbon::today();
 
-        $prev = (object)['year'=>$first->copy()->subMonth()->year,'month'=>$first->copy()->subMonth()->month];
-        $next = (object)['year'=>$first->copy()->addMonth()->year,'month'=>$first->copy()->addMonth()->month];
+        $prev = (object)[
+            'year'=>$first->copy()->subMonth()->year,
+            'month'=>$first->copy()->subMonth()->month,
+        ];
+        $next = (object)[
+            'year'=>$first->copy()->addMonth()->year,
+            'month'=>$first->copy()->addMonth()->month,
+        ];
         $currentMonth = $first->format('Y/m');
-
-        $end = $first->isSameMonth($today) ? $today : $first->copy()->endOfMonth();
+        $end = $first->isSameMonth($today)
+             ? $today
+             : $first->copy()->endOfMonth();
 
         $attendances = [];
-        for ($d=$first->copy(); $d->lte($end); $d->addDay()) {
+        for ($d = $first->copy(); $d->lte($end); $d->addDay()) {
             $attendances[] = (object)[
                 'id'        => $d->format('Ymd'),
                 'date'      => $d->copy(),
@@ -94,17 +108,15 @@ Route::middleware('auth')->group(function () {
 
     /* 勤怠詳細（ダミー） */
     Route::get('/attendance/{id}', [AttendanceController::class,'detail'])
-          ->name('attendance.detail');
+         ->name('attendance.detail');
 
     /* 勤怠修正申請（PATCH） */
-    Route::patch('/attendance/update/{id}',
-        function (AttendanceRequest $request, $id) {
-            // ここで保存 → ダミー
-            return back()->with('success','更新しました（ダミー保存）');
-        }
-    )->name('attendance.update');
+    Route::patch('/attendance/update/{id}', function (AttendanceRequest $request, $id) {
+        // 本来は保存処理 → ここではダミーでリロード
+        return back()->with('success','更新しました（ダミー保存）');
+    })->name('attendance.update');
 
-    /* 修正申請一覧（一般）―ダミー */
+    /* 修正申請一覧（一般ユーザー・ダミー） */
     Route::get('/stamp_correction_request/list', function () {
 
         $revisionRequests = collect(range(1,5))->map(function ($i) {
@@ -123,29 +135,35 @@ Route::middleware('auth')->group(function () {
 
     /* ログアウト */
     Route::get('/logout', fn() => Auth::logout() ?: redirect('/login'))
-          ->name('logout');
+         ->name('logout');
 });
 
 /* ========================================================================
    ■ 管理者向けルート
    ===================================================================== */
 
-/* 管理者ログイン */
-Route::get('/admin/login', fn() => view('admin_login'))->name('admin.login.form');
+/* 管理者ログインフォーム */
+Route::get('/admin/login', fn() => view('admin_login'))
+     ->name('admin.login.form');
 
+/* 管理者ログイン処理 */
 Route::post('/admin/login', function (AdminLoginRequest $request) {
 
     if (Auth::attempt($request->only('email','password'))) {
 
         if (! Auth::user()->is_admin) {
             Auth::logout();
-            return back()->withErrors(['email'=>'管理者アカウントのみログインできます。'])
-                         ->withInput();
+            return back()
+                   ->withErrors(['email'=>'管理者アカウントのみログインできます。'])
+                   ->withInput();
         }
         return redirect()->route('admin.attendance.list');
     }
 
-    return back()->withErrors(['email'=>'ログイン情報が登録されていません'])->withInput();
+    return back()
+           ->withErrors(['email'=>'ログイン情報が登録されていません'])
+           ->withInput();
+
 })->name('admin.login');
 
 /* 認証必須エリア（管理者） */
@@ -153,23 +171,24 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     /* ─ 日次勤怠一覧 ─ */
     Route::get('/attendance/list', function () {
-
         $sel      = Carbon::parse(request('date', now()->toDateString()));
         $prevDate = $sel->copy()->subDay()->toDateString();
         $nextDate = $sel->copy()->addDay()->toDateString();
 
-        $attendances = collect(['山田　太郎','西　伶奈','増田　一世','山本　敬吉','秋田　朋美','中西　教夫'])
-            ->map(function ($name) use ($sel) {
-                return (object)[
-                    'id'         => $sel->format('Ymd').$name,
-                    'created_at' => $sel,
-                    'clockIn'    => '09:00',
-                    'clockOut'   => '18:00',
-                    'breakTime'  => '1:00',
-                    'totalTime'  => '8:00',
-                    'user'       => (object)['name'=>$name],
-                ];
-            });
+        $attendances = collect([
+            '山田　太郎','西　伶奈','増田　一世',
+            '山本　敬吉','秋田　朋美','中西　教夫'
+        ])->map(function ($name) use ($sel) {
+            return (object)[
+                'id'         => $sel->format('Ymd').$name,
+                'created_at' => $sel,
+                'clockIn'    => '09:00',
+                'clockOut'   => '18:00',
+                'breakTime'  => '1:00',
+                'totalTime'  => '8:00',
+                'user'       => (object)['name'=>$name],
+            ];
+        });
 
         $currentDateDisplay = $sel->format('Y/m/d');
         return view('admin_attendance_list', compact(
@@ -178,21 +197,22 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     })->name('admin.attendance.list');
 
     /* ─ 勤怠詳細（管理者）─ */
-    Route::patch('/attendance/detail/{id}',
-        fn(AdminAttendanceDetailRequest $request, $id) => back()->with('success','保存！（ダミー）')
-    )->name('admin.attendance.detail.update');
-
-    /* 表示はダミーのまま */
     Route::get('/attendance/detail/{id}', function ($id) {
         $detail = (object)[
-            'id'=>$id,'date'=>now()->toDateString(),
-            'clockIn'=>'09:00','clockOut'=>'18:00',
+            'id'=>$id,
+            'date'=>now()->toDateString(),
+            'clockIn'=>'09:00',
+            'clockOut'=>'18:00',
             'breaks'=>[['start'=>'12:00','end'=>'12:30']],
             'remarks'=>'特になし',
             'user'=>(object)['name'=>'山田　太郎'],
         ];
         return view('admin_attendance_detail', compact('detail'));
     })->name('admin.attendance.detail');
+
+    Route::patch('/attendance/detail/{id}', fn(AdminAttendanceDetailRequest $request, $id) =>
+        back()->with('success','保存！（ダミー）')
+    )->name('admin.attendance.detail.update');
 
     /* ─ スタッフ一覧 ─ */
     Route::get('/staff/list', function () {
@@ -210,7 +230,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     /* ─ スタッフ別月次勤怠一覧 ─ */
     Route::get('/attendance/staff/{id}', function ($id) {
-
         $monthTop = Carbon::parse(request('date', now()->startOfMonth()));
         $prevDate = $monthTop->copy()->subMonth()->format('Y-m-01');
         $nextDate = $monthTop->copy()->addMonth()->format('Y-m-01');
@@ -221,7 +240,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         ];
 
         $attendances = [];
-        for ($d=$monthTop->copy(); $d->lte($monthTop->copy()->endOfMonth()); $d->addDay()) {
+        for ($d = $monthTop->copy(); $d->lte($monthTop->copy()->endOfMonth()); $d->addDay()) {
             $attendances[] = (object)[
                 'id'         => $d->format('Ymd'),
                 'created_at' => $d->copy(),
@@ -241,7 +260,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     /* ─ 修正申請一覧（管理者）─ */
     Route::get('/stamp_correction_request/list', function () {
-
         $status = request('status','pending');
         $today  = Carbon::today();
 
@@ -266,12 +284,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     })->name('admin.revision.list');
 
     /* ─ 修正申請承認 POST ─ */
-    Route::post('/stamp_correction_request/approve/{id}',
-        fn(AdminRevisionRequest $request,$id)=>
-            redirect()->route('admin.revision.list')->with('success','承認しました。')
+    Route::post('/stamp_correction_request/approve/{id}', fn(AdminRevisionRequest $request, $id) =>
+        redirect()->route('admin.revision.list')->with('success','承認しました。')
     )->name('admin.revision.approve');
 
     /* 管理者ログアウト */
     Route::get('/logout', fn() => Auth::logout() ?: redirect('/admin/login'))
-          ->name('admin.logout');
+         ->name('admin.logout');
 });
