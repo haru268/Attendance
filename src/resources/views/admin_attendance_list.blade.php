@@ -1,7 +1,7 @@
 {{-- resources/views/admin_attendance_list.blade.php --}}
 @php
     /** @var \Carbon\Carbon $sel */
-    $sel = \Carbon\Carbon::parse(request('date', now()));   // 一覧に表示している日
+    $sel = \Carbon\Carbon::parse(request('date', now()));
 @endphp
 
 @extends('layouts.app')
@@ -23,21 +23,21 @@
 
     {{-- ▼ 日付ナビ（白カード） --}}
     <div class="adminatt-daybox">
-        <a href="{{ route('admin.attendance.list', ['date'=>$sel->copy()->subDay()->toDateString()]) }}"
+        <a href="{{ route('admin.attendance.list', ['date'=>$prevDate]) }}"
            class="adminatt-daylink prev">
-           <img src="{{ asset('img/arrow.png.png') }}" alt="前日" class="adminatt-nav-icon">
+           <img src="{{ asset('img/arrow.png') }}" alt="前日" class="adminatt-nav-icon">
            前日
         </a>
 
         <span class="adminatt-daybox-date">
-            <img src="{{ asset('img/calendar.png.png') }}" alt="カレンダー" class="adminatt-nav-icon">
-            {{ $sel->format('Y/m/d') }}
+            <img src="{{ asset('img/calendar.png') }}" alt="カレンダー" class="adminatt-nav-icon">
+            {{ $currentDateDisplay }}
         </span>
 
-        <a href="{{ route('admin.attendance.list', ['date'=>$sel->copy()->addDay()->toDateString()]) }}"
+        <a href="{{ route('admin.attendance.list', ['date'=>$nextDate]) }}"
            class="adminatt-daylink next">
            翌日
-           <img src="{{ asset('img/arrow.png.png') }}" alt="翌日" class="adminatt-nav-icon rotated">
+           <img src="{{ asset('img/arrow.png') }}" alt="翌日" class="adminatt-nav-icon rotated">
         </a>
     </div>
 
@@ -56,15 +56,17 @@
                 <td>{{ $a->clockOut }}</td>
                 <td>{{ $a->breakTime }}</td>
                 <td>{{ $a->totalTime }}</td>
-
-                {{-- ▼ 変更点：クリックで /attendance/{yyyymmdd} へ遷移 --}}
                 <td>
-                    <a href="{{ url('/attendance/'.$sel->format('Ymd')) }}"
+                    <a href="{{ route('admin.attendance.detail', ['id'=>$a->id]) }}"
                        class="adminatt-link">詳細</a>
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6">今日出勤している人はいません。</td></tr>
+            <tr>
+                <td colspan="6" class="adminatt-no-data text-center">
+                    打刻データがありません。
+                </td>
+            </tr>
         @endforelse
         </tbody>
     </table>

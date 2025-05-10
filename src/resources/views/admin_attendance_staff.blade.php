@@ -29,19 +29,19 @@
     <div class="adminattstaff-monthbox">
         <a href="{{ route('admin.attendance.staff', ['id'=>$staff->id,'date'=>$prevDate]) }}"
            class="adminattstaff-monthlink prev">
-           <img src="{{ asset('img/arrow.png.png') }}" alt="前月" class="adminattstaff-icon">
+           <img src="{{ asset('img/arrow.png') }}" alt="前月" class="adminattstaff-icon">
            前月
         </a>
 
         <span class="adminattstaff-monthbox-date">
-            <img src="{{ asset('img/calendar.png.png') }}" alt="カレンダー" class="adminattstaff-icon">
+            <img src="{{ asset('img/calendar.png') }}" alt="カレンダー" class="adminattstaff-icon">
             {{ $currentDateDisplay }}
         </span>
 
         <a href="{{ route('admin.attendance.staff', ['id'=>$staff->id,'date'=>$nextDate]) }}"
            class="adminattstaff-monthlink next">
            翌月
-           <img src="{{ asset('img/arrow.png.png') }}" alt="翌月" class="adminattstaff-icon rotated">
+           <img src="{{ asset('img/arrow.png') }}" alt="翌月" class="adminattstaff-icon rotated">
         </a>
     </div>
 
