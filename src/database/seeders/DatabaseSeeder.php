@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             'name'     => 'Admin User',
             'email'    => 'admin@example.com',
             'is_admin' => true,
+            'is_dummy' => false, 
         ]);
 
         // 6 名のダミー一般ユーザー
@@ -35,6 +36,8 @@ class DatabaseSeeder extends Seeder
                 'name'     => $fullName,
                 'email'    => $email,
                 'password' => bcrypt('password'),
+                'is_dummy'  => true, 
+                'is_admin'  => false,
             ]);
 
             // 過去30日分の勤怠データ
