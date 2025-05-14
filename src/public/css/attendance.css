@@ -1,81 +1,112 @@
+/* =======================================================
+   attendance.css   ★全文貼り替え
+   ======================================================= */
 
+/* ---- ベース ---- */
 html,
 body {
     margin: 0;
     padding: 0;
-    background-color: #f0eff2;
+    background: #f0eff2
 }
 
 main {
-    background: #f0eff2;
+    background: #f0eff2
 }
 
+/* ---- コンテナ ---- */
 .attendance-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 15vh 1rem 15vh;
+    padding: 15vh 1rem;
     font-size: 1.2rem;
 }
 
 .attendance-container>* {
-    margin-bottom: 2rem;
+    margin-bottom: 2rem
 }
 
+/* ---- ステータス表示 ---- */
 .status-badge {
-    background-color: #ddd;
+    background: #ddd;
     color: #333;
     border-radius: 999px;
-    padding: 0.5rem 1rem;
+    padding: .5rem 1rem;
     font-size: 1.25rem;
     font-weight: bold;
 }
 
+/* ---- 日付・時刻 ---- */
 .date-display {
-    font-size: 2rem;
+    font-size: 2rem
 }
 
 .time-display {
     font-size: 5rem;
-    font-weight: bold;
+    font-weight: bold
 }
 
+/* ---- ボタンエリア ---- */
 #buttonArea {
     display: flex;
     justify-content: center;
-    gap: 5rem;
+    gap: 5rem
 }
 
-.btn-clock-in,
-.btn-clock-out,
-.btn-break-in {
+/* =======================================================
+   打刻ボタン
+   ======================================================= */
+
+/* 共通 */
+.btn-clock {
     border: none;
     border-radius: 20px;
     cursor: pointer;
     font-size: 1.5rem;
     font-weight: bold;
-    letter-spacing: 0.1em;
+    letter-spacing: .1em;
     width: 180px;
     padding: 1rem 0;
     text-align: center;
-}
-
-.btn-clock-in,
-.btn-clock-out {
-    background-color: #000;
     color: #fff;
+    background: #000;
+    transition: opacity .2s;
 }
 
+.btn-clock:hover {
+    opacity: .8
+}
+
+/* 種類ごと（色分け） */
+.btn-clock-in {
+    background: #28a745
+}
+
+/* 出勤＝緑   */
+.btn-clock-out {
+    background: #dc3545
+}
+
+/* 退勤＝赤   */
 .btn-break-in {
-    background-color: #fff;
-    color: #000;
+    background: #17a2b8
 }
 
+/* 休憩入＝青 */
+.btn-break-out {
+    background: #ffc107;
+    color: #000
+}
+
+/* 休憩戻＝黄 */
+
+/* ---- 退勤後メッセージ ---- */
 .completed-message {
     font-size: 2rem;
     font-weight: bold;
     color: #333;
     text-align: center;
     margin: 2rem 0;
-    letter-spacing: 0.1em;
+    letter-spacing: .1em;
 }

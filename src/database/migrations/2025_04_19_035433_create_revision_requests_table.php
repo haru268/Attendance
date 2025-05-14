@@ -10,14 +10,17 @@ class CreateRevisionRequestsTable extends Migration
     {
         Schema::create('revision_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('attendance_id')->constrained()->onDelete('cascade');
-            $table->time('requested_clock_in')->nullable();
-            $table->time('requested_clock_out')->nullable();
-            $table->text('reason');
-            $table->string('status')->default('pending');
-            $table->text('approval_comment')->nullable();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('attendance_id');
+            $table->dateTime('original_clock_in');
+            $table->dateTime('original_clock_out')->nullable();
+            $table->json('breaks')->nullable();
+            $table->text('remarks')->nullable();
+            $table->enum('status',['pending','approved'])->default('pending');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('attendance_id')->references('id')->on('attendances');
         });
     }
 

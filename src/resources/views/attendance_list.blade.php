@@ -1,4 +1,3 @@
-{{-- resources/views/attendance_list.blade.php --}}
 @extends('layouts.app')
 
 @section('title', '勤怠一覧')
@@ -57,8 +56,8 @@
           <td>{{ $att->breakTime ?? '-' }}</td>
           <td>{{ $att->totalTime ?? '-' }}</td>
           <td>
-            <a href="{{ route('attendance.detail', ['id' => $att->date->format('Ymd')]) }}"
-               class="detail-link">詳細</a>
+            {{-- 数値 ID を key パラメータで渡す --}}
+            <a href="{{ route('attendance.detail', ['key' => $att->id]) }}" class="detail-link">詳細</a>
           </td>
         </tr>
         @endforeach

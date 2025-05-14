@@ -21,9 +21,9 @@
 
     {{-- ▼ タブ（下線なし） --}}
     <nav class="stampcr-tabs">
-        <a href="{{ route('admin.revision.list',['status'=>'pending']) }}"
+        <a href="{{ route('stamp_correction_request.list',['status'=>'pending']) }}"
            class="stampcr-tab {{ $status==='pending' ? 'stampcr-tab--active' : '' }}">承認待ち</a>
-        <a href="{{ route('admin.revision.list',['status'=>'approved']) }}"
+        <a href="{{ route('stamp_correction_request.list',['status'=>'approved']) }}"
            class="stampcr-tab {{ $status==='approved' ? 'stampcr-tab--active' : '' }}">承認済み</a>
     </nav>
 

@@ -6,15 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 class AddIsDummyToUsersTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // 既定値 false（0）で追加
-            $table->boolean('is_dummy')->default(false)->after('is_admin');
+            $table->boolean('is_dummy')
+                  ->default(false)
+                  ->after('remember_token');   // ← 位置はお好みで
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('is_dummy');

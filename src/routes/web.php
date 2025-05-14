@@ -14,124 +14,41 @@ use App\Http\Requests\AdminLoginRequest;
 use App\Http\Requests\AdminAttendanceDetailRequest;
 use App\Http\Requests\AdminRevisionRequest;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+// Public routes: register & login
+Route::get('/register', fn() => view('register'))->name('register.form');
+Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'store'])->name('register');
+Route::get('/login', fn() => view('login'))->name('login.form');
+Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
-/*==================================================
-  ◆ 会員登録・ログイン（共通）
-==================================================*/
-
-// ― 会員登録フォーム
-Route::get('/register', fn () => view('register'))
-    ->name('register.form');
-
-// ― 会員登録処理 → 自動ログイン → 打刻画面
-Route::post('/register', function (RegisterRequest $request) {
-    $user = User::create([
-        'name'     => $request->name,
-        'email'    => $request->email,
-        'password' => bcrypt($request->password),
-    ]);
-    Auth::login($user);
-    return redirect()->route('attendance')->with('success', '登録が完了しました。');
-})->name('register');
-
-// ― ログインフォーム（一般）
-Route::get('/login', fn () => view('login'))
-    ->name('login.form');
-
-// ― ログイン処理（一般）
-Route::post('/login', function (LoginRequest $request) {
-    if (Auth::attempt($request->only('email', 'password'))) {
-        if (Auth::user()->is_admin) {   // 管理者はここでは弾く
-            Auth::logout();
-            return back()->withErrors(['email' => '一般ユーザー用のアカウントでログインしてください。'])
-                         ->withInput();
-        }
-        return redirect()->route('attendance');
-    }
-    return back()->withErrors(['email' => '認証に失敗しました。'])->withInput();
-})->name('login');
-
-/*==================================================
-  ◆ 認証必須（一般ユーザー）
-==================================================*/
+// Protected routes
 Route::middleware('auth')->group(function () {
 
-    /* 打刻トップ */
+    // 1) 打刻トップ
     Route::get('/attendance', [AttendanceController::class, 'index'])
-        ->name('attendance');
+         ->name('attendance');
 
-    /* 月次勤怠一覧（ダミー） */
-    Route::get('/attendance/list', function (Request $request) {
-        $year   = $request->query('year', Carbon::now()->year);
-        $month  = $request->query('month', Carbon::now()->month);
-        $first  = Carbon::create($year, $month, 1);
-        $today  = Carbon::today();
+    // 2) 打刻POST
+    Route::post('/attendance/clock', [AttendanceController::class, 'clock'])
+         ->name('attendance.clock');
 
-        $prev = (object)['year' => $first->copy()->subMonth()->year,
-                         'month'=> $first->copy()->subMonth()->month];
-        $next = (object)['year' => $first->copy()->addMonth()->year,
-                         'month'=> $first->copy()->addMonth()->month];
-        $currentMonth = $first->format('Y/m');
+    // 3) 月次一覧
+    Route::get('/attendance/list', [AttendanceController::class, 'list'])
+         ->name('attendance.list');
 
-        if ($first->gt($today->copy()->startOfMonth())) {
-            $attendances = [];               // 未来月 → 空
-        } else {
-            $end = $first->isSameMonth($today) ? $today : $first->copy()->endOfMonth();
-            $attendances = [];
-            for ($d = $first->copy(); $d->lte($end); $d->addDay()) {
-                $attendances[] = (object)[
-                    'id'        => $d->format('Ymd'),
-                    'date'      => $d->copy(),
-                    'clockIn'   => '09:00',
-                    'clockOut'  => '18:00',
-                    'breakTime' => '1:00',
-                    'totalTime' => '8:00',
-                ];
-            }
-        }
-        $noRecords = empty($attendances);
+    // 4) 詳細 (YYYY-MM-DD or numeric ID)
+    Route::get('/attendance/{key}', [AttendanceController::class, 'detail'])
+         ->where('key', '[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
+         ->name('attendance.detail');
 
-        return view('attendance_list', compact(
-            'attendances', 'prev', 'next', 'currentMonth', 'noRecords'
-        ));
-    })->name('attendance.list');
+    // 5) 修正申請 PATCH
+    Route::patch('/attendance/update/{id}', [AttendanceController::class, 'update'])
+         ->name('attendance.update');
 
-    /* 勤怠詳細（ダミー） */
-    Route::get('/attendance/{id}', [AttendanceController::class, 'detail'])
-        ->name('attendance.detail');
-
-    /* 勤怠修正申請（PATCH：ダミー） */
-    Route::patch('/attendance/update/{id}', function (AttendanceRequest $r, $id) {
-        return back()->with('success', '更新しました（ダミー保存）');
-    })->name('attendance.update');
-
-    /* 修正申請一覧（一般ユーザー用） */
-    Route::get(
-        '/stamp_correction_request/list',
-        fn () => view('stamp_correction_request_list', [
-            'status'            => 'pending',
-            'revisionRequests'  => collect(range(1, 5))->map(function ($i) {
-                $d = Carbon::today()->subDays($i);
-                return (object)[
-                    'id'             => $d->format('Ymd'),
-                    'status'         => '承認待ち',
-                    'targetDatetime' => $d->format('Y-m-d') . ' 09:00〜18:00',
-                    'reason'         => '打刻ミス',
-                    'created_at'     => $d,
-                ];
-            }),
-        ])
-    )->name('stamp_correction_request.list');
-
-    /* ログアウト（POST 推奨） */
-    Route::post('/logout', fn () => tap(Auth::logout(), fn () => session()->invalidate()) ?: redirect('/login'))
-        ->name('logout');
+    // Logout
+    Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])
+         ->name('logout');
 });
+
 
 /*==================================================
   ◆ 管理者ログイン
@@ -253,37 +170,50 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         ]);
     })->name('admin.attendance.staff');
 
-    /*===== 5) 修正申請一覧（管理者用） =====*/
-    Route::get('/stamp_correction_request/list', function () {
-        $status = request('status', 'pending');   // pending / approved
-        $today  = Carbon::today();
+    /* =========================================
+   ■ 修正申請一覧（一般／管理者 共通パス）
+   ========================================= */
+Route::get('/stamp_correction_request/list', function (Request $request) {
 
-        $make = function ($state, $i) use ($today) {
-            $d = $today->copy()->subDays($i);
-            return (object)[
-                'id'             => $d->format('Ymd'),
-                'user'           => (object)['name' => '山田 太郎'],
-                'status'         => $state,
-                'targetDatetime' => $d->format('Y-m-d') . ' 09:00〜18:00',
-                'reason'         => $state === '承認待ち' ? '打刻ミス' : '外出',
-                'created_at'     => $d,
-            ];
-        };
+    /* ――― 共通変数 ――― */
+    $status   = $request->query('status', 'pending');
+    $today    = Carbon::today();
+    $user     = Auth::user();          // 便利なので変数へ
+    $isAdmin  = $user->is_admin;
+    $isDummy  = $user->is_dummy;       // ★ 追加：フラグを見る
 
-        $all = array_merge(
-            array_map(fn ($i) => $make('承認待ち', $i), range(1, 5)),
-            array_map(fn ($i) => $make('承認済み', $i), range(6, 10)),
-        );
-
-        $revisionRequests = array_filter($all, fn ($r) =>
-            $r->status === ($status === 'approved' ? '承認済み' : '承認待ち')
-        );
+    /* ───────── 管理者表示 ───────── */
+    if ($isAdmin) {
+        /* ダミーだけで OK なので従来通り */
+        /* …ここは今までのダミー生成ロジックのまま … */
 
         return view('stamp_correction_request_list', [
-            'status'            => $status,
-            'revisionRequests'  => $revisionRequests,
+            'revisionRequests' => $revisionRequests,
+            'status'           => $status,
         ]);
-    })->name('admin.revision.list');
+    }
+
+    /* ───────── 一般ユーザー表示 ───────── */
+
+    if ($isDummy) {
+        /* ダミーユーザー：いままでのハードコードで見せる */
+        $revisionRequests = collect(range(1,5))->map(function ($i) {
+            /* …省略（いままでのダミーデータ生成）… */
+        })->all();
+    } else {
+        /* 実ユーザー：DB から自分の申請だけを取得 */
+        $revisionRequests = \App\Models\RevisionRequest::where('user_id', $user->id)
+                           ->where('status', $status === 'approved' ? '承認済み' : '承認待ち')
+                           ->orderByDesc('created_at')
+                           ->get();
+    }
+
+    return view('stamp_correction_request_list', [
+        'revisionRequests' => $revisionRequests,
+        'status'           => $status,
+    ]);
+})->name('stamp_correction_request.list');
+
 
     /*===== 6) 修正申請承認（ダミー） =====*/
     Route::post('/stamp_correction_request/approve/{id}', fn (AdminRevisionRequest $r, $id) =>

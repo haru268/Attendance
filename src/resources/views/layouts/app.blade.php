@@ -11,11 +11,11 @@
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
   <link rel="stylesheet" href="{{ asset('css/register.css') }}">
   <link rel="stylesheet" href="{{ asset('css/login.css') }}">
-  <link rel="stylesheet" href="{{ asset('cssattendance.css') }}">
   <link rel="stylesheet" href="{{ asset('css/attendance_list.css') }}">
   <link rel="stylesheet" href="{{ asset('css/stamp_correction_request.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin_login.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin_attendance_list.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/attendance.css') }}">
 @stack('styles')
 
 
@@ -29,7 +29,7 @@
   </main>
   {{-- ここまで追加 --}}
 
-  <script src="{{ asset('js/app.js') }}"></script>
+  
   @stack('scripts')
 </body>
 </html>
