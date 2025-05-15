@@ -1,7 +1,8 @@
 {{-- resources/views/admin_attendance_staff.blade.php --}}
+
 @php
     /**
-     * $staff                … 対象スタッフ（id / name / email）
+     * $staff                … 対象スタッフ（id / name）
      * $currentDateDisplay   … 「YYYY/MM」形式の表示用文字列
      * $prevDate / $nextDate … 前月・翌月へ飛ぶ YYYY-MM-01 形式
      * $attendances          … その月の勤怠コレクション
@@ -10,7 +11,7 @@
 
 @extends('layouts.app')
 
-@section('title', $staff->name.' さんの勤怠一覧')
+@section('title', $staff->name . ' さんの勤怠一覧')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/admin_attendance_staff.css') }}">
@@ -18,7 +19,8 @@
 
 @section('content')
 <div class="adminattstaff-container">
-    {{-- ▲ ヘッダー --}}
+
+    {{-- ▲ 見出し --}}
     <div class="adminattstaff-header">
         <span class="adminattstaff-bar"></span>
         <h2>{{ $staff->name }} さんの勤怠一覧</h2>
@@ -49,23 +51,34 @@
         <table class="adminattstaff-table">
             <thead>
                 <tr>
-                    <th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th><th>合計</th><th>詳細</th>
+                    <th>日付</th>
+                    <th>出勤</th>
+                    <th>退勤</th>
+                    <th>休憩</th>
+                    <th>合計</th>
+                    <th>詳細</th>
                 </tr>
             </thead>
             <tbody>
             @forelse ($attendances as $att)
+                @php
+                    // レコードIDがあればそれを、なければ日付文字列を key として使う
+                    $key = $att->id
+                           ? $att->id
+                           : $att->created_at->format('Y-m-d');
+                @endphp
                 <tr>
                     <td>
-                        {{ \Carbon\Carbon::parse($att->created_at)->format('m/d') }}
-                        （{{ ['日','月','火','水','木','金','土'][\Carbon\Carbon::parse($att->created_at)->dayOfWeek] }}）
+                        {{ $att->created_at->format('m/d') }}
+                        （{{ ['日','月','火','水','木','金','土'][$att->created_at->dayOfWeek] }}）
                     </td>
-                    <td>{{ $att->clockIn   }}</td>
-                    <td>{{ $att->clockOut  }}</td>
+                    <td>{{ $att->clockIn }}</td>
+                    <td>{{ $att->clockOut }}</td>
                     <td>{{ $att->breakTime }}</td>
                     <td>{{ $att->totalTime }}</td>
                     <td>
-                        {{-- 管理者用勤怠詳細へ --}}
-                        <a href="{{ route('admin.attendance.detail', ['id' => $att->id]) }}"
+                        {{-- staff_id をクエリパラメータで渡して詳細ページに飛ぶ --}}
+                        <a href="{{ route('admin.attendance.detail', ['key' => $key]) }}?staff_id={{ $staff->id }}"
                            class="adminattstaff-link">
                             詳細
                         </a>
@@ -73,11 +86,14 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="no-records">該当する勤怠データがありません。</td>
+                    <td colspan="6" class="no-records">
+                        該当する勤怠データがありません。
+                    </td>
                 </tr>
             @endforelse
             </tbody>
         </table>
     </div>
+
 </div>
 @endsection
