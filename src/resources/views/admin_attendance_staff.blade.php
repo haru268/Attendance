@@ -1,7 +1,7 @@
 {{-- resources/views/admin_attendance_staff.blade.php --}}
 @php
     /**
-     * $staff                … 対象スタッフ（id / name）
+     * $staff                … 対象スタッフ（id / name / email）
      * $currentDateDisplay   … 「YYYY/MM」形式の表示用文字列
      * $prevDate / $nextDate … 前月・翌月へ飛ぶ YYYY-MM-01 形式
      * $attendances          … その月の勤怠コレクション
@@ -18,16 +18,15 @@
 
 @section('content')
 <div class="adminattstaff-container">
-
-    {{-- ▲ 見出し --}}
+    {{-- ▲ ヘッダー --}}
     <div class="adminattstaff-header">
         <span class="adminattstaff-bar"></span>
         <h2>{{ $staff->name }} さんの勤怠一覧</h2>
     </div>
 
-    {{-- ▼ 月ナビ（白カード） --}}
+    {{-- ▼ 月ナビ --}}
     <div class="adminattstaff-monthbox">
-        <a href="{{ route('admin.attendance.staff', ['id'=>$staff->id,'date'=>$prevDate]) }}"
+        <a href="{{ route('admin.attendance.staff', ['id' => $staff->id, 'date' => $prevDate]) }}"
            class="adminattstaff-monthlink prev">
            <img src="{{ asset('img/arrow.png') }}" alt="前月" class="adminattstaff-icon">
            前月
@@ -38,7 +37,7 @@
             {{ $currentDateDisplay }}
         </span>
 
-        <a href="{{ route('admin.attendance.staff', ['id'=>$staff->id,'date'=>$nextDate]) }}"
+        <a href="{{ route('admin.attendance.staff', ['id' => $staff->id, 'date' => $nextDate]) }}"
            class="adminattstaff-monthlink next">
            翌月
            <img src="{{ asset('img/arrow.png') }}" alt="翌月" class="adminattstaff-icon rotated">
@@ -57,20 +56,25 @@
             @forelse ($attendances as $att)
                 <tr>
                     <td>
-                        {{ $att->created_at->format('m/d') }}
-                        （{{ ['日','月','火','水','木','金','土'][$att->created_at->dayOfWeek] }}）
+                        {{ \Carbon\Carbon::parse($att->created_at)->format('m/d') }}
+                        （{{ ['日','月','火','水','木','金','土'][\Carbon\Carbon::parse($att->created_at)->dayOfWeek] }}）
                     </td>
                     <td>{{ $att->clockIn   }}</td>
                     <td>{{ $att->clockOut  }}</td>
                     <td>{{ $att->breakTime }}</td>
                     <td>{{ $att->totalTime }}</td>
                     <td>
-                        <a href="{{ url('/attendance/'.$att->created_at->format('Ymd')) }}"
-           class="adminattstaff-link">詳細</a>
+                        {{-- 管理者用勤怠詳細へ --}}
+                        <a href="{{ route('admin.attendance.detail', ['id' => $att->id]) }}"
+                           class="adminattstaff-link">
+                            詳細
+                        </a>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6">該当する勤怠データがありません。</td></tr>
+                <tr>
+                    <td colspan="6" class="no-records">該当する勤怠データがありません。</td>
+                </tr>
             @endforelse
             </tbody>
         </table>

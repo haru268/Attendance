@@ -42,17 +42,17 @@ class AttendanceController extends Controller
      */
     public function clock(Request $request)
     {
-        $request->validate(['type' => ['required','in:clock_in,clock_out,break_in,break_out']]);
+        $request->validate([
+            'type' => ['required','in:clock_in,clock_out,break_in,break_out']
+        ]);
+
         $user  = Auth::user();
         $today = Carbon::today()->toDateString();
 
-        $attendance = Attendance::firstOrCreate([
-            'user_id' => $user->id,
-            'date'    => $today,
-        ], [
-            'clock_in'  => null,
-            'clock_out' => null,
-        ]);
+        $attendance = Attendance::firstOrCreate(
+            ['user_id' => $user->id, 'date' => $today],
+            ['clock_in' => null, 'clock_out' => null]
+        );
 
         switch ($request->type) {
             case 'clock_in':
@@ -114,7 +114,7 @@ class AttendanceController extends Controller
 
         $records = Attendance::with('breakRecords')
                     ->where('user_id', $user->id)
-                    ->whereYear('date', $year)
+                    ->whereYear('date',  $year)
                     ->whereMonth('date', $month)
                     ->orderBy('date')
                     ->get();
@@ -132,14 +132,19 @@ class AttendanceController extends Controller
                 'clockOut'  => optional($a->clock_out)->format('H:i'),
                 'breakTime' => $breakSec ? gmdate('H:i', $breakSec) : '-',
                 'totalTime' => ($a->clock_in && $a->clock_out)
-                             ? gmdate('H:i', strtotime($a->clock_out) - strtotime($a->clock_in) - $breakSec)
+                             ? gmdate('H:i',
+                                  strtotime($a->clock_out)
+                                - strtotime($a->clock_in)
+                                - $breakSec)
                              : '-',
             ];
         });
 
         $noRecords = $attendances->isEmpty();
 
-        return view('attendance_list', compact('attendances','prev','next','currentMonth','noRecords'));
+        return view('attendance_list', compact(
+            'attendances', 'prev', 'next', 'currentMonth', 'noRecords'
+        ));
     }
 
     /**
@@ -160,7 +165,7 @@ class AttendanceController extends Controller
             abort(404);
         }
 
-        // 自身の修正申請が「承認待ち」かをチェック
+        // 自身の承認待ち申請があるか
         $isPending = RevisionRequest::where('attendance_id', $attendance->id)
                                    ->where('user_id', Auth::id())
                                    ->where('status', 'pending')
@@ -173,22 +178,20 @@ class AttendanceController extends Controller
      * 5) 修正申請作成 (PATCH)
      */
     public function update(AttendanceRequest $request, $id)
-{
-    $attendance = Attendance::findOrFail($id);
+    {
+        $attendance = Attendance::findOrFail($id);
 
-    // テーブルのカラムに合わせてフィールド名を変更
-    RevisionRequest::create([
-        'user_id'                => Auth::id(),
-        'attendance_id'          => $attendance->id,
-        // リクエストされた打刻時刻
-        'requested_clock_in'     => $request->input('clock_in'),
-        'requested_clock_out'    => $request->input('clock_out'),
-        // 理由（以前は remarks）
-        'reason'                 => $request->input('remarks'),
-        // status はマイグレーションでデフォルト 'pending' に
-    ]);
+        // テーブルのカラム名に合わせて保存
+        RevisionRequest::create([
+            'user_id'             => Auth::id(),
+            'attendance_id'       => $attendance->id,
+            'requested_clock_in'  => $request->input('clock_in'),
+            'requested_clock_out' => $request->input('clock_out'),
+            'reason'              => $request->input('remarks'),
+            // status はマイグレーションの default で 'pending'
+        ]);
 
-    return back()->with('pending', true)
-                 ->with('success','修正申請を送信しました');
-}
+        // 詳細画面に戻る
+        return back();
+    }
 }

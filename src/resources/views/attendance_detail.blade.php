@@ -1,9 +1,10 @@
+{{-- resources/views/attendance_detail.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/attendance_detail.css') }}">
 <style>
-  /* エラーサマリーの文字色を赤に */
+  /* バリデーションエラーを赤文字に */
   .error-summary .error-message {
     color: red;
     margin-bottom: .5em;
@@ -18,21 +19,12 @@
     <h2>勤怠詳細</h2>
   </div>
 
-  {{-- 成功メッセージ --}}
-  @if(session('success'))
-    <div class="success-message">{{ session('success') }}</div>
-  @endif
-
-  {{-- 名前行の上にまとめてエラーを赤字で表示 --}}
+  {{-- バリデーションエラーを名前行の上にまとめて表示 --}}
   @if($errors->any())
-    @php
-      // メッセージを一意化する
-      $uniqueMessages = array_unique($errors->all());
-    @endphp
-
+    @php $unique = array_unique($errors->all()); @endphp
     <div class="error-summary">
-      @foreach($uniqueMessages as $message)
-        <div class="error-message">{{ $message }}</div>
+      @foreach($unique as $msg)
+        <div class="error-message">{{ $msg }}</div>
       @endforeach
     </div>
   @endif
@@ -102,12 +94,12 @@
           <th>備考</th>
           <td>
             @if($isPending)
-              <span class="remarks-text">{{ $attendance->remarks }}</span>
+              <span class="remarks-text">{{ $attendance->reason }}</span>
             @else
               <textarea
                 name="remarks"
                 class="remarks-input"
-                rows="3">{{ old('remarks', $attendance->remarks) }}</textarea>
+                rows="3">{{ old('remarks', $attendance->reason) }}</textarea>
             @endif
           </td>
         </tr>
@@ -121,6 +113,7 @@
         <button type="submit" class="btn-update">修正</button>
       @endif
     </div>
+
   </form>
 </div>
 @endsection
