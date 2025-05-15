@@ -134,56 +134,63 @@ Route::post('/admin/login', function(AdminLoginRequest $req) {
 */
 Route::prefix('admin')->middleware('auth')->group(function () {
     // 日次勤怠一覧（過去日も含め常にダミー併合）
-    Route::get('/attendance/list', function(Request $request) {
-        $sel      = Carbon::parse($request->query('date', now()->toDateString()));
-        $today    = Carbon::today()->toDateString();
-        $prevDate = $sel->copy()->subDay()->toDateString();
-        $nextDate = $sel->copy()->addDay()->toDateString();
+    // 管理者：日次勤怠一覧
+Route::get('/attendance/list', function(Request $request) {
+    $sel      = Carbon::parse($request->query('date', now()->toDateString()));
+    $today    = Carbon::today();               // ← Carbon インスタンスに変更
+    $prevDate = $sel->copy()->subDay()->toDateString();
+    $nextDate = $sel->copy()->addDay()->toDateString();
 
-        if ($sel->lte($today)) {
-            // ダミー行
-            $names = ['山田 太郎','西 伶奈','増田 一世','山本 敬吉','秋田 朋美','中西 教夫'];
-            $dummy = collect($names)->map(fn($name) => (object)[
-                'id'         => null,
-                'created_at' => $sel,
-                'clockIn'    => '09:00',
-                'clockOut'   => '18:00',
-                'breakTime'  => '1:00',
-                'totalTime'  => '8:00',
-                'user'       => (object)['name'=>$name],
+    // 当日以前なら「ダミー行＋実レコード」を表示
+    if ($sel->lte($today)) {
+        // ダミー対象スタッフ名
+        $names = [
+            '山田 太郎','西 伶奈','増田 一世',
+            '山本 敬吉','秋田 朋美','中西 教夫',
+        ];
+        $dummy = collect($names)->map(fn($name) => (object)[
+            'id'         => null,
+            'created_at' => $sel,
+            'clockIn'    => '09:00',
+            'clockOut'   => '18:00',
+            'breakTime'  => '1:00',
+            'totalTime'  => '8:00',
+            'user'       => (object)['name' => $name],
+        ]);
+
+        // 当日の実レコード（あれば）
+        $records = Attendance::with(['user','breakRecords'])
+            ->whereDate('date', $sel->toDateString())
+            ->get()
+            ->map(fn($a) => (object)[
+                'id'         => $a->id,
+                'created_at' => Carbon::parse($a->date),
+                'clockIn'    => optional($a->clock_in)->format('H:i')   ?: '-',
+                'clockOut'   => optional($a->clock_out)->format('H:i')  ?: '-',
+                'breakTime'  => ($sec = $a->breakRecords->sum(fn($b)=>
+                                   strtotime($b->break_end?:now())
+                                 - strtotime($b->break_start)))
+                               ? gmdate('H:i',$sec) : '-',
+                'totalTime'  => ($a->clock_in && $a->clock_out)
+                               ? gmdate('H:i',
+                                   strtotime($a->clock_out)
+                                 - strtotime($a->clock_in)
+                                 - $sec)
+                               : '-',
+                'user'       => $a->user,
             ]);
 
-            // 実データ
-            $records = Attendance::with(['user','breakRecords'])
-                ->whereDate('date',$sel->toDateString())
-                ->get()
-                ->map(fn($a) => (object)[
-                    'id'         => $a->id,
-                    'created_at' => Carbon::parse($a->date),
-                    'clockIn'    => optional($a->clock_in)->format('H:i') ?? '-',
-                    'clockOut'   => optional($a->clock_out)->format('H:i') ?? '-',
-                    'breakTime'  => ($sec = $a->breakRecords->sum(fn($b)=>
-                                       strtotime($b->break_end?:now())
-                                     - strtotime($b->break_start)))
-                                   ? gmdate('H:i',$sec) : '-',
-                    'totalTime'  => ($a->clock_in && $a->clock_out)
-                                   ? gmdate('H:i',
-                                       strtotime($a->clock_out)
-                                     - strtotime($a->clock_in)
-                                     - $sec)
-                                   : '-',
-                    'user'       => $a->user,
-                ]);
+        $attendances = $dummy->concat($records);
+    }
+    // 未来日は「打刻データがありません。」扱い
+    else {
+        $attendances = collect();
+    }
 
-            $attendances = $dummy->concat($records);
-        } else {
-            // 未来日は空
-            $attendances = collect();
-        }
+    return view('admin_attendance_list', compact('attendances','prevDate','nextDate'))
+         ->with('currentDateDisplay', $sel->format('Y/m/d'));
+})->name('admin.attendance.list');
 
-        return view('admin_attendance_list', compact('attendances','prevDate','nextDate'))
-             ->with('currentDateDisplay',$sel->format('Y/m/d'));
-    })->name('admin.attendance.list');
 
     // 勤怠詳細
     Route::get('/attendance/detail/{key}', [AttendanceController::class, 'detail'])

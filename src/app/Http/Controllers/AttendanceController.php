@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AttendanceRequest;
 use App\Models\Attendance;
+use App\Models\BreakRecord;
 use App\Models\RevisionRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -64,7 +65,10 @@ class AttendanceController extends Controller
                 break;
             case 'break_in':
                 if (! $attendance->breakRecords()->whereNull('break_end')->exists()) {
-                    $attendance->breakRecords()->create(['break_start'=>now()]);
+                    BreakRecord::create([
+                        'attendance_id' => $attendance->id,
+                        'break_start'   => now(),
+                    ]);
                 }
                 break;
             case 'break_out':
@@ -134,88 +138,135 @@ class AttendanceController extends Controller
     }
 
     /**
-     * 4) 勤怠詳細
-     *    - 数値ID or 日付キー (admin: staff_id でダミー or 他ユーザー)
-     */
-    public function detail($key, Request $request)
-    {
-        $user     = Auth::user();
-        $isAdmin  = $user->is_admin;
-        $staffId  = $request->query('staff_id');
-        $dummyMap = [
-            1=>'山田 太郎',2=>'西 伶奈',3=>'増田 一世',
-            4=>'山本 敬吉',5=>'秋田 朋美',6=>'中西 教夫',
-        ];
+ * 4) 勤怠詳細
+ *
+ * @param  string  $key      数値 ID または YYYY-MM-DD
+ * @param  Request $request
+ */
+public function detail($key, Request $request)
+{
+    $user    = Auth::user();
+    $isAdmin = $user->is_admin;
+    $staffId = $request->query('staff_id');
 
-        // — 数値ID の場合はそのまま取得 —
-        if (ctype_digit($key)) {
-            $attendance = Attendance::with('breakRecords','user')
-                ->where('id',$key)->firstOrFail();
-        }
-        // — 日付キー の場合 —
-        elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/',$key)) {
-            // (A) 管理者 + ダミー対象 staff_id → ダミー詳細
-            if ($isAdmin && $staffId && isset($dummyMap[$staffId])) {
-                [$last,$first] = explode(' ',$dummyMap[$staffId],2) + [1=>''];
-                $detail = (object)[
-                    'id'       => $staffId.'_'.str_replace('-','',$key),
-                    'user'     => (object)['last_name'=>$last,'first_name'=>$first,'name'=>$dummyMap[$staffId]],
-                    'date'     => $key,
-                    'clockIn'  => '09:00',
-                    'clockOut' => '18:00',
-                    'breaks'   => [['start'=>'12:00','end'=>'13:00']],
-                    'remarks'  => '',
-                ];
-                return view('attendance_detail', compact('detail'));
-            }
-            // (B) 管理者 + staff_id → 他ユーザーの実データ
-            if ($isAdmin && $staffId) {
-                $attendance = Attendance::with('breakRecords','user')
-                    ->where('user_id',$staffId)
-                    ->whereDate('date',$key)
-                    ->firstOrFail();
-            }
-            // (C) 一般ユーザー → 自分の実データ
-            else {
-                $attendance = Attendance::with('breakRecords','user')
-                    ->where('user_id',$user->id)
-                    ->whereDate('date',$key)
-                    ->firstOrFail();
-            }
-        }
-        else {
-            abort(404);
-        }
+    // ダミー対象スタッフ一覧
+    $dummyMap = [
+        1 => '山田 太郎',
+        2 => '西 伶奈',
+        3 => '増田 一世',
+        4 => '山本 敬吉',
+        5 => '秋田 朋美',
+        6 => '中西 教夫',
+    ];
 
-        // — 実レコードから detail 構築 —
-        $breaks = $attendance->breakRecords->map(fn($b)=>[
-            'start' => Carbon::parse($b->break_start)->format('H:i'),
-            'end'   => $b->break_end
-                         ? Carbon::parse($b->break_end)->format('H:i')
-                         : '',
-        ])->all();
-
+    // ―― 日付キーかつ管理者でダミー指定がある場合は即ダミー表示 ――
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $key)
+        && $isAdmin
+        && $staffId
+        && isset($dummyMap[$staffId])
+    ) {
+        // 氏名を「姓」「名」に分割
+        [$last, $first] = explode(' ', $dummyMap[$staffId], 2) + [1 => ''];
         $detail = (object)[
-            'id'       => $attendance->id,
-            'user'     => $attendance->user,
-            'date'     => $attendance->date,
-            'clockIn'  => optional($attendance->clock_in)->format('H:i')?:'',
-            'clockOut' => optional($attendance->clock_out)->format('H:i')?:'',
-            'breaks'   => $breaks,
-            'remarks'  => $attendance->remarks ?? '',
+            'id'        => 'dummy_'.$staffId.'_'.$key,
+            'user'      => (object)[
+                'last_name'  => $last,
+                'first_name' => $first,
+                'name'       => $dummyMap[$staffId],
+            ],
+            'date'      => $key,
+            'clockIn'   => '09:00',
+            'clockOut'  => '18:00',
+            'breaks'    => [
+                ['start' => '12:00', 'end' => '13:00'],
+            ],
+            'remarks'   => '',
         ];
 
         return view('attendance_detail', compact('detail'));
     }
 
-    /** 5) 修正申請 */
+    // ―― 数値 ID の場合は実データを取得 ――
+    if (ctype_digit($key)) {
+        $attendance = Attendance::with('breakRecords','user')
+            ->findOrFail($key);
+    }
+    // ―― YYYY-MM-DD の場合は該当ユーザーの実データを取得 ――
+    elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $key)) {
+        $query = Attendance::with('breakRecords','user')
+                   ->whereDate('date', $key);
+
+        // 管理者かつ staff_id があれば他ユーザー
+        if ($isAdmin && $staffId) {
+            $attendance = $query->where('user_id', $staffId)->firstOrFail();
+        }
+        // 一般ユーザーは自分の
+        else {
+            $attendance = $query->where('user_id', $user->id)->firstOrFail();
+        }
+    }
+    else {
+        abort(404);
+    }
+
+    // ―― 実レコードを detail オブジェクトに整形 ――
+    $breaks = $attendance->breakRecords->map(fn($b) => [
+        'start' => Carbon::parse($b->break_start)->format('H:i'),
+        'end'   => $b->break_end
+                     ? Carbon::parse($b->break_end)->format('H:i')
+                     : '',
+    ])->all();
+
+    $detail = (object)[
+        'id'        => $attendance->id,
+        'user'      => $attendance->user,
+        'date'      => $attendance->date,
+        'clockIn'   => optional($attendance->clock_in)->format('H:i') ?: '',
+        'clockOut'  => optional($attendance->clock_out)->format('H:i') ?: '',
+        'breaks'    => $breaks,
+        'remarks'   => $attendance->remarks ?? '',
+    ];
+
+    return view('attendance_detail', compact('detail'));
+}
+
+    /**
+     * 5) 修正申請 / 更新
+     *    管理者は即時更新、一般は申請作成
+     */
     public function update(AttendanceRequest $request, $id)
     {
-        $attendance = Attendance::findOrFail($id);
+        $user = Auth::user();
 
+        // —— 管理者なら即時更新 —— 
+        if ($user->is_admin) {
+            $attendance = Attendance::with('breakRecords')->findOrFail($id);
+
+            // メインの時刻・備考を更新
+            $attendance->update([
+                'clock_in'  => $request->clock_in,
+                'clock_out' => $request->clock_out,
+                'remarks'   => $request->remarks,
+            ]);
+
+            // 休憩レコードを上書き
+            $breaksInput = $request->breaks;
+            foreach ($attendance->breakRecords as $index => $break) {
+                if (isset($breaksInput[$index])) {
+                    $break->update([
+                        'break_start' => $breaksInput[$index]['start'],
+                        'break_end'   => $breaksInput[$index]['end'],
+                    ]);
+                }
+            }
+
+            return back()->with('success','修正を保存しました。');
+        }
+
+        // —— 一般ユーザーは申請を作成 —— 
         RevisionRequest::create([
-            'user_id'             => Auth::id(),
-            'attendance_id'       => $attendance->id,
+            'user_id'             => $user->id,
+            'attendance_id'       => $id,
             'requested_clock_in'  => $request->clock_in,
             'requested_clock_out' => $request->clock_out,
             'breaks'              => json_encode($request->breaks),
