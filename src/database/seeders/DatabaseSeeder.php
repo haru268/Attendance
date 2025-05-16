@@ -79,12 +79,6 @@ class DatabaseSeeder extends Seeder
                 ->for($att)
                 ->create();
 
-            if (random_int(1, 100) <= 5) {
-                RevisionRequest::factory()
-                    ->for($user)
-                    ->for($att)
-                    ->create();
-            }
         }
     }
 }
