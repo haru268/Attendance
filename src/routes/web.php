@@ -33,7 +33,8 @@ Route::post('/register', function(RegisterRequest $request) {
         'password' => bcrypt($request->password),
     ]);
     Auth::login($user);
-    return redirect()->route('attendance')->with('success','登録が完了しました。');
+    return redirect()->route('attendance')
+                     ->with('success','登録が完了しました。');
 })->name('register');
 
 // ログインフォーム
@@ -43,7 +44,6 @@ Route::get('/login', fn() => view('login'))
 // ログイン処理
 Route::post('/login', function(LoginRequest $request) {
     if (Auth::attempt($request->only('email','password'))) {
-        // 管理者はここで弾く
         if (Auth::user()->is_admin) {
             Auth::logout();
             return back()
@@ -52,7 +52,9 @@ Route::post('/login', function(LoginRequest $request) {
         }
         return redirect()->route('attendance');
     }
-    return back()->withErrors(['email'=>'認証に失敗しました。'])->withInput();
+    return back()
+        ->withErrors(['email'=>'認証に失敗しました。'])
+        ->withInput();
 })->name('login');
 
 /*
@@ -61,7 +63,6 @@ Route::post('/login', function(LoginRequest $request) {
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-
     // 打刻トップ
     Route::get('/attendance', [AttendanceController::class,'index'])
          ->name('attendance');
@@ -74,7 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/attendance/list', [AttendanceController::class,'list'])
          ->name('attendance.list');
 
-    // 勤怠詳細 (YYYY-MM-DD or numeric ID)
+    // 勤怠詳細 (YYYY-MM-DD or ID)
     Route::get('/attendance/{key}', [AttendanceController::class,'detail'])
          ->where('key','[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
          ->name('attendance.detail');
@@ -124,7 +125,9 @@ Route::post('/admin/login', function(AdminLoginRequest $req) {
         }
         return redirect()->route('admin.attendance.list');
     }
-    return back()->withErrors(['email'=>'ログイン情報が登録されていません'])->withInput();
+    return back()
+        ->withErrors(['email'=>'ログイン情報が登録されていません'])
+        ->withInput();
 })->name('admin.login');
 
 /*
@@ -133,27 +136,25 @@ Route::post('/admin/login', function(AdminLoginRequest $req) {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->middleware('auth')->group(function () {
-
-    // 1) 管理者：日次勤怠一覧
+    //
+    // 1) 日次勤怠一覧
+    //
     Route::get('/attendance/list', function(Request $request) {
-        // 表示対象日を Carbon で取得
         $sel      = Carbon::parse($request->query('date', now()->toDateString()));
-        // 今日も Carbon として
         $today    = Carbon::today();
         $prevDate = $sel->copy()->subDay()->toDateString();
         $nextDate = $sel->copy()->addDay()->toDateString();
 
-        // strictly after today → 何も表示しない
+        // 未来日は何も表示しない
         if ($sel->gt($today)) {
             $attendances = collect();
         } else {
-            // 管理者でない全ユーザー
             $users = User::where('is_admin', false)->get();
             $attendances = collect();
 
             foreach ($users as $user) {
                 if ($user->is_dummy) {
-                    // ダミーユーザーは常に出す
+                    // ダミーユーザー：常に固定ダミーデータ
                     $attendances->push((object)[
                         'id'         => null,
                         'user'       => $user,
@@ -165,17 +166,15 @@ Route::prefix('admin')->middleware('auth')->group(function () {
                     ]);
                     continue;
                 }
-                // 実ユーザー：登録日以前なら
+                // 実ユーザー：登録日以前かつレコードがある場合のみ
                 if ($user->created_at->toDateString() > $sel->toDateString()) {
                     continue;
                 }
-                // 該当日の Attendance
                 $att = Attendance::with('breakRecords')
                     ->where('user_id', $user->id)
                     ->whereDate('date', $sel)
                     ->first();
                 if (! $att) {
-                    // レコードなければスキップ
                     continue;
                 }
                 $sec = $att->breakRecords->sum(fn($b)=>
@@ -205,45 +204,42 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         ))->with('currentDateDisplay', $sel->format('Y/m/d'));
     })->name('admin.attendance.list');
 
-    // 2) 勤怠詳細（管理者も共通 detail メソッドを利用）
+    //
+    // 2) 勤怠詳細（共通 detail を利用）
+    //
     Route::get('/attendance/detail/{key}', [AttendanceController::class,'detail'])
          ->where('key','[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
          ->name('admin.attendance.detail');
 
+    //
     // 3) スタッフ別月次勤怠一覧
+    //
     Route::get('/attendance/staff/{id}', [AttendanceController::class,'staffAttendance'])
          ->name('admin.attendance.staff');
 
+    //
     // 4) 修正申請承認（ダミー）
-    Route::post('/stamp_correction_request/approve/{id}', fn(AdminRevisionRequest $r,$id)=>
+    //
+    Route::post('/stamp_correction_request/approve/{id}', fn(AdminRevisionRequest $r, $id) =>
         back()->with('success','承認しました。')
     )->name('admin.revision.approve');
 
-    // 5) スタッフ一覧
-    Route::get('/staff/list', function(){
-        $dummyNames = ['山田 太郎','西 伶奈','増田 一世','山本 敬吉','秋田 朋美','中西 教夫'];
-        $dummy = collect($dummyNames)->map(fn($n,$i) => (object)[
-            'id'    => $i+1,
-            'name'  => $n,
-            'email' => Str::slug(Str::ascii($n),'_').'@example.com',
-        ]);
-        $real = User::where('is_admin',false)
-                    ->get(['id','name','email'])
-                    ->map(fn($u)=>(object)[
-                        'id'=>$u->id,'name'=>$u->name,'email'=>$u->email,
-                    ]);
-        $realNames = $real->pluck('name')->map(fn($n)=>str_replace('　',' ',$n))->all();
-        $dummy = $dummy->reject(fn($d)=> in_array(str_replace('　',' ',$d->name), $realNames));
-        $staff = $dummy->concat($real);
+    //
+    // 5) スタッフ一覧（users テーブルのみを利用）
+    //
+    Route::get('/staff/list', function() {
+        $staff = User::where('is_admin', false)
+                     ->get(['id','name','email']);
         return view('admin_staff_list', compact('staff'));
     })->name('admin.staff.list');
 
+    //
     // 管理者ログアウト
+    //
     Route::post('/logout', function(){
         Auth::logout();
         session()->invalidate();
         session()->regenerateToken();
         return redirect('/admin/login');
     })->name('admin.logout');
-
 });

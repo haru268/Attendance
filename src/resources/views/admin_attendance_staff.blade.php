@@ -1,17 +1,13 @@
 {{-- resources/views/admin_attendance_staff.blade.php --}}
-
 @php
-    /**
-     * $staff                … 対象スタッフ（id / name）
-     * $currentDateDisplay   … 「YYYY/MM」形式の表示用文字列
-     * $prevDate / $nextDate … 前月・翌月へ飛ぶ YYYY-MM-01 形式
-     * $attendances          … その月の勤怠コレクション
-     */
+    // 表示対象年月を Carbon でパース
+    $monthTop = \Carbon\Carbon::parse(request('date', now()->startOfMonth()));
+    $currentMonth = $monthTop->format('Y/m');
 @endphp
 
 @extends('layouts.app')
 
-@section('title', $staff->name . ' さんの勤怠一覧')
+@section('title', $staff->name . 'さんの勤怠一覧')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/admin_attendance_staff.css') }}">
@@ -20,13 +16,13 @@
 @section('content')
 <div class="adminattstaff-container">
 
-    {{-- ▲ 見出し --}}
+    {{-- ▲ 見出し（黒い縦棒＋タイトル） --}}
     <div class="adminattstaff-header">
         <span class="adminattstaff-bar"></span>
-        <h2>{{ $staff->name }} さんの勤怠一覧</h2>
+        <h2>{{ $staff->name }}さんの勤怠一覧</h2>
     </div>
 
-    {{-- ▼ 月ナビ --}}
+    {{-- ▼ 月切り替えナビ（白カード） --}}
     <div class="adminattstaff-monthbox">
         <a href="{{ route('admin.attendance.staff', ['id' => $staff->id, 'date' => $prevDate]) }}"
            class="adminattstaff-monthlink prev">
@@ -36,7 +32,7 @@
 
         <span class="adminattstaff-monthbox-date">
             <img src="{{ asset('img/calendar.png') }}" alt="カレンダー" class="adminattstaff-icon">
-            {{ $currentDateDisplay }}
+            {{ $currentMonth }}
         </span>
 
         <a href="{{ route('admin.attendance.staff', ['id' => $staff->id, 'date' => $nextDate]) }}"
@@ -46,7 +42,7 @@
         </a>
     </div>
 
-    {{-- ▼ 勤怠テーブル --}}
+    {{-- ▼ 白背景カード --}}
     <div class="adminattstaff-card">
         <table class="adminattstaff-table">
             <thead>
@@ -61,12 +57,6 @@
             </thead>
             <tbody>
             @forelse ($attendances as $att)
-                @php
-                    // レコードIDがあればそれを、なければ日付文字列を key として使う
-                    $key = $att->id
-                           ? $att->id
-                           : $att->created_at->format('Y-m-d');
-                @endphp
                 <tr>
                     <td>
                         {{ $att->created_at->format('m/d') }}
@@ -77,7 +67,13 @@
                     <td>{{ $att->breakTime }}</td>
                     <td>{{ $att->totalTime }}</td>
                     <td>
-                        {{-- staff_id をクエリパラメータで渡して詳細ページに飛ぶ --}}
+                        {{-- ここで必ず詳細リンクを表示 --}}
+                        @php
+                            // detail ルートの key は ID か日付文字列
+                            $key = $att->id
+                                   ? $att->id
+                                   : $att->created_at->format('Y-m-d');
+                        @endphp
                         <a href="{{ route('admin.attendance.detail', ['key' => $key]) }}?staff_id={{ $staff->id }}"
                            class="adminattstaff-link">
                             詳細
@@ -86,9 +82,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="no-records">
-                        該当する勤怠データがありません。
-                    </td>
+                  <td colspan="6" class="text-center">該当する勤怠データがありません。</td>
                 </tr>
             @endforelse
             </tbody>

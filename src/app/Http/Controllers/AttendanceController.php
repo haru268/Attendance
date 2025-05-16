@@ -96,56 +96,58 @@ class AttendanceController extends Controller
      * 3) 月次勤怠一覧
      */
     public function list(Request $request)
-    {
-        $user  = Auth::user();
-        $year  = (int) $request->query('year', now()->year);
-        $month = (int) $request->query('month', now()->month);
-        $first = Carbon::create($year, $month, 1);
+{
+    $user  = Auth::user();
+    $year  = (int) $request->query('year', now()->year);
+    $month = (int) $request->query('month', now()->month);
+    $first = Carbon::create($year, $month, 1);
 
-        $prev = (object)[
-            'year'  => $first->copy()->subMonth()->year,
-            'month' => $first->copy()->subMonth()->month,
-        ];
-        $next = (object)[
-            'year'  => $first->copy()->addMonth()->year,
-            'month' => $first->copy()->addMonth()->month,
-        ];
-        $currentMonth = $first->format('Y/m');
+    $prev = (object)[
+        'year'  => $first->copy()->subMonth()->year,
+        'month' => $first->copy()->subMonth()->month,
+    ];
+    $next = (object)[
+        'year'  => $first->copy()->addMonth()->year,
+        'month' => $first->copy()->addMonth()->month,
+    ];
+    $currentMonth = $first->format('Y/m');
 
-        $records = Attendance::with('breakRecords')
-                    ->where('user_id', $user->id)
-                    ->whereYear('date',  $year)
-                    ->whereMonth('date', $month)
-                    ->orderBy('date')
-                    ->get();
+    // 「登録日以降」のレコードだけ取得
+    $records = Attendance::with('breakRecords')
+                ->where('user_id', $user->id)
+                ->whereDate('date', '>=', $user->created_at->toDateString())
+                ->whereYear('date',  $year)
+                ->whereMonth('date', $month)
+                ->orderBy('date')
+                ->get();
 
-        $attendances = $records->map(function ($a) {
-            $breakSec = $a->breakRecords->sum(function ($b) {
-                $end = $b->break_end ?? now();
-                return strtotime($end) - strtotime($b->break_start);
-            });
-
-            return (object) [
-                'id'        => $a->id,
-                'date'      => Carbon::parse($a->date),
-                'clockIn'   => optional($a->clock_in)->format('H:i') ?? '-',
-                'clockOut'  => optional($a->clock_out)->format('H:i') ?? '-',
-                'breakTime' => $breakSec ? gmdate('H:i', $breakSec) : '-',
-                'totalTime' => ($a->clock_in && $a->clock_out)
-                             ? gmdate('H:i',
-                                  strtotime($a->clock_out)
-                                - strtotime($a->clock_in)
-                                - $breakSec)
-                             : '-',
-            ];
+    $attendances = $records->map(function ($a) {
+        $breakSec = $a->breakRecords->sum(function ($b) {
+            $end = $b->break_end ?? now();
+            return strtotime($end) - strtotime($b->break_start);
         });
 
-        $noRecords = $attendances->isEmpty();
+        return (object) [
+            'id'        => $a->id,
+            'date'      => Carbon::parse($a->date),
+            'clockIn'   => optional($a->clock_in)->format('H:i') ?? '-',
+            'clockOut'  => optional($a->clock_out)->format('H:i') ?? '-',
+            'breakTime' => $breakSec ? gmdate('H:i', $breakSec) : '-',
+            'totalTime' => ($a->clock_in && $a->clock_out)
+                         ? gmdate('H:i',
+                              strtotime($a->clock_out)
+                            - strtotime($a->clock_in)
+                            - $breakSec)
+                         : '-',
+        ];
+    });
 
-        return view('attendance_list', compact(
-            'attendances', 'prev', 'next', 'currentMonth', 'noRecords'
-        ));
-    }
+    $noRecords = $attendances->isEmpty();
+
+    return view('attendance_list', compact(
+        'attendances', 'prev', 'next', 'currentMonth', 'noRecords'
+    ));
+}
 
     /**
      * 4) 詳細表示
@@ -157,23 +159,22 @@ class AttendanceController extends Controller
     {
         // 管理者が他ユーザーを見るときの staff_id
         $staffId = $request->query('staff_id');
-        $user = $staffId
-              ? User::findOrFail($staffId)
-              : Auth::user();
+        $user    = $staffId
+                 ? User::findOrFail($staffId)
+                 : Auth::user();
 
-        // 「数字」で呼び出されたらそのIDのレコードを直表示
         if (ctype_digit($key)) {
+            // ID 指定
             $attendance = Attendance::with('breakRecords','user')->findOrFail((int)$key);
-            $detail = $attendance;
+            $detail     = $attendance;
         } else {
-            // 日付文字列 → Carbon
+            // 日付指定
             if (preg_match('/^\d{8}$/', $key)) {
                 $date = Carbon::createFromFormat('Ymd', $key);
             } else {
                 $date = Carbon::parse($key);
             }
 
-            // 実レコード検索
             $attendance = Attendance::with('breakRecords')
                 ->where('user_id', $user->id)
                 ->whereDate('date', $date)
@@ -182,20 +183,20 @@ class AttendanceController extends Controller
             if ($attendance) {
                 $detail = $attendance;
             } else {
-                // レコードが無い場合はダミーオブジェクトで埋める
+                // レコードなし → ダミー表示
                 $detail = (object)[
-                    'id'        => null,
-                    'user'      => $user,
-                    'date'      => $date->toDateString(),
-                    'clock_in'  => null,
-                    'clock_out' => null,
-                    'remarks'   => '',
+                    'id'           => null,
+                    'user'         => $user,
+                    'date'         => $date->toDateString(),
+                    'clock_in'     => null,
+                    'clock_out'    => null,
+                    'remarks'      => '',
                     'breakRecords' => collect(),
                 ];
             }
         }
 
-        // 共通で breaks 配列を用意
+        // breaks 配列を整形
         $detail->breaks = collect($detail->breakRecords ?? [])
             ->map(fn($b) => [
                 'start' => optional($b->break_start)->format('H:i'),
@@ -238,67 +239,77 @@ class AttendanceController extends Controller
      * 6) 管理者：スタッフ別月次勤怠一覧
      */
     public function staffAttendance(Request $request, $id)
-    {
-        $monthTop = Carbon::parse($request->query('date', now()->startOfMonth()));
-        $prevDate = $monthTop->copy()->subMonth()->format('Y-m-01');
-        $nextDate = $monthTop->copy()->addMonth()->format('Y-m-01');
+{
+    // ① 対象年月の取得
+    $monthTop     = Carbon::parse($request->query('date', now()->startOfMonth()));
+    $prevDate     = $monthTop->copy()->subMonth()->format('Y-m-01');
+    $nextDate     = $monthTop->copy()->addMonth()->format('Y-m-01');
+    $currentMonth = $monthTop->format('Y/m');
+    $today        = Carbon::today();
 
-        // ダミーID一覧
-        $dummyStaffNames = [
-            1 => '山田 太郎',
-            2 => '西 伶奈',
-            3 => '増田 一世',
-            4 => '山本 敬吉',
-            5 => '秋田 朋美',
-            6 => '中西 教夫',
-        ];
+    // ② スタッフ情報を取得
+    $staff = User::findOrFail($id);
 
-        if (isset($dummyStaffNames[$id])) {
-            // ダミーユーザー用
-            $staff = (object)[
-                'id'   => $id,
-                'name' => $dummyStaffNames[$id],
-            ];
+    // ③ ダミー or 実ユーザー で分岐
+    if ($staff->is_dummy) {
+        // ダミーユーザー：未来月は何も表示せず、
+        // 過去月は月末まで、当月は今日までをダミーデータ生成
+        if ($monthTop->gt($today->copy()->startOfMonth())) {
             $attendances = collect();
-            for ($d = $monthTop->copy()->startOfMonth(); $d->lte($monthTop->copy()->endOfMonth()); $d->addDay()) {
+        } else {
+            $start = $monthTop->copy()->startOfMonth();
+            $end   = ($monthTop->year === $today->year && $monthTop->month === $today->month)
+                   ? $today
+                   : $monthTop->copy()->endOfMonth();
+
+            $attendances = collect();
+            for ($d = $start; $d->lte($end); $d->addDay()) {
                 $attendances->push((object)[
                     'id'         => null,
-                    'created_at' => $d,
+                    'created_at' => $d->copy(),
                     'clockIn'    => '09:00',
                     'clockOut'   => '18:00',
                     'breakTime'  => '1:00',
                     'totalTime'  => '08:00',
                 ]);
             }
-        } else {
-            // 実ユーザー用
-            $staff = User::findOrFail($id);
-            $attendances = Attendance::with('breakRecords')
-                ->where('user_id', $id)
-                ->whereYear('date', $monthTop->year)
-                ->whereMonth('date', $monthTop->month)
-                ->orderBy('date')
-                ->get()
-                ->map(fn($a) => (object)[
+        }
+    } else {
+        // 実ユーザー：登録日以降かつ当日以前のレコードだけ取得
+        $registrationDate = $staff->created_at->toDateString();
+        $attendances = Attendance::with('breakRecords')
+            ->where('user_id', $id)
+            ->whereYear('date',  $monthTop->year)
+            ->whereMonth('date', $monthTop->month)
+            ->whereDate('date', '>=', $registrationDate)
+            ->whereDate('date', '<=', $today->toDateString())
+            ->orderBy('date')
+            ->get()
+            ->map(function ($a) {
+                $sec = $a->breakRecords->sum(fn($b) =>
+                    strtotime($b->break_end ?: now()) - strtotime($b->break_start)
+                );
+                $workSec = ($a->clock_in && $a->clock_out)
+                          ? strtotime($a->clock_out)
+                            - strtotime($a->clock_in)
+                            - $sec
+                          : 0;
+                return (object)[
                     'id'         => $a->id,
                     'created_at' => Carbon::parse($a->date),
                     'clockIn'    => optional($a->clock_in)->format('H:i')  ?: '-',
                     'clockOut'   => optional($a->clock_out)->format('H:i') ?: '-',
-                    'breakTime'  => gmdate('H:i', $a->breakRecords->sum(fn($b) =>
-                                        strtotime($b->break_end ?: now())
-                                      - strtotime($b->break_start))),
+                    'breakTime'  => $sec ? gmdate('H:i', $sec) : '-',
                     'totalTime'  => ($a->clock_in && $a->clock_out)
-                                   ? gmdate('H:i',
-                                       strtotime($a->clock_out)
-                                     - strtotime($a->clock_in)
-                                     - $a->breakRecords->sum(fn($b)=>
-                                       strtotime($b->break_end ?: now()) - strtotime($b->break_start)))
-                                   : '-',
-                ]);
-        }
-
-        return view('admin_attendance_staff', compact(
-            'staff','attendances','prevDate','nextDate'
-        ))->with('currentDateDisplay', $monthTop->format('Y/m'));
+                                  ? gmdate('H:i', max(0, $workSec))
+                                  : '-',
+                ];
+            });
     }
+
+    // ④ ビューに返す
+    return view('admin_attendance_staff', compact(
+        'staff', 'attendances', 'prevDate', 'nextDate'
+    ))->with('currentDateDisplay', $currentMonth);
+}
 }
