@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Http\Controllers\AttendanceController;
 use App\Models\Attendance;
@@ -13,90 +12,74 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\AttendanceRequest;
 use App\Http\Requests\AdminLoginRequest;
-use App\Http\Requests\AdminRevisionRequest;
 
-/*
-|--------------------------------------------------------------------------
-| Public routes: register & login
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+|  一般ユーザー：登録 & ログイン
+========================================================= */
+Route::get('/register', fn () => view('register'))->name('register.form');
 
-// 会員登録フォーム
-Route::get('/register', fn() => view('register'))
-     ->name('register.form');
-
-// 会員登録処理
-Route::post('/register', function(RegisterRequest $request) {
+Route::post('/register', function (RegisterRequest $r) {
     $user = User::create([
-        'name'     => $request->name,
-        'email'    => $request->email,
-        'password' => bcrypt($request->password),
+        'name'     => $r->name,
+        'email'    => $r->email,
+        'password' => bcrypt($r->password),
     ]);
     Auth::login($user);
-    return redirect()->route('attendance')
-                     ->with('success','登録が完了しました。');
+    return redirect()->route('attendance')->with('success', '登録が完了しました。');
 })->name('register');
 
-// ログインフォーム
-Route::get('/login', fn() => view('login'))
-     ->name('login.form');
+Route::get('/login', fn () => view('login'))->name('login.form');
 
-// ログイン処理
-Route::post('/login', function(LoginRequest $request) {
-    if (Auth::attempt($request->only('email','password'))) {
+Route::post('/login', function (LoginRequest $r) {
+    if (Auth::attempt($r->only('email', 'password'))) {
+        // 管理者アカウントは一般ログイン不可
         if (Auth::user()->is_admin) {
             Auth::logout();
-            return back()
-                ->withErrors(['email'=>'一般ユーザー用のアカウントでログインしてください。'])
-                ->withInput();
+            return back()->withErrors(['email' => '一般ユーザー用のアカウントでログインしてください。'])->withInput();
         }
         return redirect()->route('attendance');
     }
-    return back()
-        ->withErrors(['email'=>'認証に失敗しました。'])
-        ->withInput();
+    return back()->withErrors(['email' => '認証に失敗しました。'])->withInput();
 })->name('login');
 
-/*
-|--------------------------------------------------------------------------
-| Protected routes (normal users)
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+|  一般ユーザー：保護ルート
+========================================================= */
 Route::middleware('auth')->group(function () {
-    // 打刻トップ
-    Route::get('/attendance', [AttendanceController::class,'index'])
-         ->name('attendance');
 
-    // 打刻 POST
-    Route::post('/attendance/clock', [AttendanceController::class,'clock'])
-         ->name('attendance.clock');
-
-    // 月次勤怠一覧
-    Route::get('/attendance/list', [AttendanceController::class,'list'])
-         ->name('attendance.list');
-
-    // 勤怠詳細 (YYYY-MM-DD or ID)
-    Route::get('/attendance/{key}', [AttendanceController::class,'detail'])
-         ->where('key','[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
+    /* ---------- 勤怠関連 ---------- */
+    Route::get('/attendance',               [AttendanceController::class, 'index'])->name('attendance');
+    Route::post('/attendance/clock',        [AttendanceController::class, 'clock'])->name('attendance.clock');
+    Route::get('/attendance/list',          [AttendanceController::class, 'list'])->name('attendance.list');
+    Route::get('/attendance/{key}',         [AttendanceController::class, 'detail'])
+         ->where('key', '[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
          ->name('attendance.detail');
+    Route::patch('/attendance/update/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
 
-    // 修正申請 (PATCH)
-    Route::patch('/attendance/update/{id}', [AttendanceController::class,'update'])
-         ->name('attendance.update');
+    /* ---------- 申請一覧（一般 / 管理者 共通の実体はここ） ---------- */
+    Route::get('/stamp_correction_request/list', function (Request $req) {
 
-    // 自分の修正申請一覧
-    Route::get('/stamp_correction_request/list', function(Request $request) {
-        $status = $request->query('status','pending');
-        $user   = Auth::user();
-        $revisionRequests = RevisionRequest::where('user_id',$user->id)
-                                           ->where('status',$status)
-                                           ->orderByDesc('created_at')
-                                           ->get();
-        return view('stamp_correction_request_list', compact('revisionRequests','status'));
+        $status = $req->query('status', 'pending');          // pending / approved
+        $isAdm  = Auth::user()->is_admin;                    // true → 全件、false → 自分のみ
+
+        $query = RevisionRequest::with(['user', 'attendance'])
+                   ->where('status', $status)
+                   ->orderByDesc('created_at');
+
+        if (!$isAdm) {                                       // 一般ユーザー
+            $query->where('user_id', Auth::id());
+        }
+        $revisionRequests = $query->get();
+
+        return view('stamp_correction_request_list', [
+            'revisionRequests' => $revisionRequests,
+            'status'           => $status,
+            'isAdmin'          => $isAdm,
+        ]);
     })->name('stamp_correction_request.list');
 
-    // ログアウト
-    Route::post('/logout', function() {
+    /* ---------- ログアウト ---------- */
+    Route::post('/logout', function () {
         Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
@@ -104,139 +87,123 @@ Route::middleware('auth')->group(function () {
     })->name('logout');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Admin login
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+|  管理者：ログイン
+========================================================= */
+Route::get('/admin/login', fn () => view('admin_login'))->name('admin.login.form');
 
-// 管理者ログインフォーム
-Route::get('/admin/login', fn() => view('admin_login'))
-     ->name('admin.login.form');
-
-// 管理者ログイン処理
-Route::post('/admin/login', function(AdminLoginRequest $req) {
-    if (Auth::attempt($req->only('email','password'))) {
-        if (! Auth::user()->is_admin) {
+Route::post('/admin/login', function (AdminLoginRequest $r) {
+    if (Auth::attempt($r->only('email', 'password'))) {
+        if (!Auth::user()->is_admin) {
             Auth::logout();
-            return back()
-                ->withErrors(['email'=>'管理者アカウントのみログインできます。'])
-                ->withInput();
+            return back()->withErrors(['email' => '管理者アカウントのみログインできます。'])->withInput();
         }
         return redirect()->route('admin.attendance.list');
     }
-    return back()
-        ->withErrors(['email'=>'ログイン情報が登録されていません'])
-        ->withInput();
+    return back()->withErrors(['email' => 'ログイン情報が登録されていません'])->withInput();
 })->name('admin.login');
 
-/*
-|--------------------------------------------------------------------------
-| Protected routes (admin users)
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+|  管理者：保護ルート
+========================================================= */
 Route::prefix('admin')->middleware('auth')->group(function () {
-    //
-    // 1) 日次勤怠一覧
-    //
-    Route::get('/attendance/list', function(Request $request) {
-        $sel      = Carbon::parse($request->query('date', now()->toDateString()));
+
+    /* ---------- 日次勤怠一覧 ---------- */
+    Route::get('/attendance/list', function (Request $r) {
+        $sel      = Carbon::parse($r->query('date', now()->toDateString()));
         $today    = Carbon::today();
         $prevDate = $sel->copy()->subDay()->toDateString();
         $nextDate = $sel->copy()->addDay()->toDateString();
 
-        // 未来日は何も表示しない
-        if ($sel->gt($today)) {
-            $attendances = collect();
-        } else {
+        $attendances = collect();
+        if (!$sel->gt($today)) {
             $users = User::where('is_admin', false)->get();
-            $attendances = collect();
-
-            foreach ($users as $user) {
-                if ($user->is_dummy) {
-                    // ダミーユーザー：常に固定ダミーデータ
+            foreach ($users as $u) {
+                if ($u->is_dummy) {
                     $attendances->push((object)[
-                        'id'         => null,
-                        'user'       => $user,
-                        'created_at' => $sel,
-                        'clockIn'    => '09:00',
-                        'clockOut'   => '18:00',
-                        'breakTime'  => '1:00',
-                        'totalTime'  => '08:00',
+                        'id' => null, 'user' => $u, 'created_at' => $sel,
+                        'clockIn' => '09:00', 'clockOut' => '18:00',
+                        'breakTime' => '1:00', 'totalTime' => '08:00',
                     ]);
                     continue;
                 }
-                // 実ユーザー：登録日以前かつレコードがある場合のみ
-                if ($user->created_at->toDateString() > $sel->toDateString()) {
-                    continue;
-                }
+                if ($u->created_at->toDateString() > $sel->toDateString()) continue;
+
                 $att = Attendance::with('breakRecords')
-                    ->where('user_id', $user->id)
-                    ->whereDate('date', $sel)
-                    ->first();
-                if (! $att) {
-                    continue;
-                }
-                $sec = $att->breakRecords->sum(fn($b)=>
-                    strtotime($b->break_end ?: now()) - strtotime($b->break_start)
-                );
-                $workSec = ($att->clock_in && $att->clock_out)
-                         ? strtotime($att->clock_out)
-                           - strtotime($att->clock_in)
-                           - $sec
-                         : 0;
+                       ->where('user_id', $u->id)->whereDate('date', $sel)->first();
+                if (!$att) continue;
+
+                $sec  = $att->breakRecords->sum(fn ($b) => strtotime($b->break_end ?: now()) - strtotime($b->break_start));
+                $work = ($att->clock_in && $att->clock_out)
+                      ? strtotime($att->clock_out) - strtotime($att->clock_in) - $sec : 0;
+
                 $attendances->push((object)[
                     'id'         => $att->id,
-                    'user'       => $user,
+                    'user'       => $u,
                     'created_at' => Carbon::parse($att->date),
-                    'clockIn'    => optional($att->clock_in)->format('H:i')  ?: '-',
+                    'clockIn'    => optional($att->clock_in)->format('H:i') ?: '-',
                     'clockOut'   => optional($att->clock_out)->format('H:i') ?: '-',
                     'breakTime'  => gmdate('H:i', $sec),
-                    'totalTime'  => $att->clock_in && $att->clock_out
-                                   ? gmdate('H:i', max(0, $workSec))
-                                   : '-',
+                    'totalTime'  => $work ? gmdate('H:i', $work) : '-',
                 ]);
             }
         }
 
-        return view('admin_attendance_list', compact(
-            'attendances','prevDate','nextDate'
-        ))->with('currentDateDisplay', $sel->format('Y/m/d'));
+        return view('admin_attendance_list', compact('attendances', 'prevDate', 'nextDate'))
+               ->with('currentDateDisplay', $sel->format('Y/m/d'));
     })->name('admin.attendance.list');
 
-    //
-    // 2) 勤怠詳細（共通 detail を利用）
-    //
-    Route::get('/attendance/detail/{key}', [AttendanceController::class,'detail'])
-         ->where('key','[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
+    /* ---------- 勤怠詳細（実処理は共通 Controller） ---------- */
+    Route::get('/attendance/detail/{key}', [AttendanceController::class, 'detail'])
+         ->where('key', '[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
          ->name('admin.attendance.detail');
 
-    //
-    // 3) スタッフ別月次勤怠一覧
-    //
-    Route::get('/attendance/staff/{id}', [AttendanceController::class,'staffAttendance'])
+    /* ---------- スタッフ別月次勤怠 ---------- */
+    Route::get('/attendance/staff/{id}', [AttendanceController::class, 'staffAttendance'])
          ->name('admin.attendance.staff');
 
-    //
-    // 4) 修正申請承認（ダミー）
-    //
-    Route::post('/stamp_correction_request/approve/{id}', fn(AdminRevisionRequest $r, $id) =>
-        back()->with('success','承認しました。')
-    )->name('admin.revision.approve');
+    /* ---------- 申請一覧 (管理者 URL) ---------- */
+    Route::get('/stamp_correction_request/list', function (Request $r) {
+        // /admin/... で来ても中身は共通ルートへ
+        return redirect()->route('stamp_correction_request.list', $r->query());
+    })->name('admin.stamp_correction_request.list');
 
-    //
-    // 5) スタッフ一覧（users テーブルのみを利用）
-    //
-    Route::get('/staff/list', function() {
-        $staff = User::where('is_admin', false)
-                     ->get(['id','name','email']);
+    /* ---------- 修正申請承認 ---------- */
+    Route::post('/stamp_correction_request/approve/{id}', function ($id) {
+
+        $rev = RevisionRequest::where('id', $id)->where('status', 'pending')->firstOrFail();
+        $att = $rev->attendance;
+
+        /* Attendance 反映 */
+        $att->clock_in  = $rev->proposed_clock_in;
+        $att->clock_out = $rev->proposed_clock_out;
+        $att->remarks   = $rev->proposed_remarks;
+        $att->save();
+
+        /* 休憩更新 */
+        $att->breakRecords()->delete();
+        foreach ($rev->breaks ?? [] as $bk) {
+            $att->breakRecords()->create([
+                'break_start' => $bk['start'] ?: null,
+                'break_end'   => $bk['end']   ?: null,
+            ]);
+        }
+
+        /* ステータス変更 */
+        $rev->status = 'approved';
+        $rev->save();
+
+        return back()->with('success', '承認しました。');
+    })->name('admin.revision.approve');
+
+    /* ---------- スタッフ一覧 ---------- */
+    Route::get('/staff/list', function () {
+        $staff = User::where('is_admin', false)->get(['id', 'name', 'email']);
         return view('admin_staff_list', compact('staff'));
     })->name('admin.staff.list');
 
-    //
-    // 管理者ログアウト
-    //
-    Route::post('/logout', function(){
+    /* ---------- 管理者ログアウト ---------- */
+    Route::post('/logout', function () {
         Auth::logout();
         session()->invalidate();
         session()->regenerateToken();
