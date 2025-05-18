@@ -1,12 +1,9 @@
-/* ============== 管理者ログイン (admin_login.css) ============== */
 
-/* ページ背景を真っ白に */
 html,
 body {
     background: #fff;
 }
 
-/* 外枠カード -------------------------------------------------- */
 .adminlogin-container {
     max-width: 480px;
     margin: 3rem auto 2rem;
@@ -22,7 +19,6 @@ body {
     font-weight: bold;
 }
 
-/* フォーム ---------------------------------------------------- */
 .adminlogin-form-group {
     margin-bottom: 1.5rem;
 }
@@ -43,14 +39,12 @@ body {
     box-sizing: border-box;
 }
 
-/* エラー表示 -------------------------------------------------- */
 .adminlogin-error {
     color: #d32f2f;
     font-size: .9rem;
     margin-top: .4rem;
 }
 
-/* ボタン ------------------------------------------------------ */
 .adminlogin-btn-login {
     width: 100%;
     padding: .75rem 1rem;
@@ -67,7 +61,6 @@ body {
     opacity: .85;
 }
 
-/* スマホ幅調整 ---------------------------------------------- */
 @media(max-width:480px) {
     .adminlogin-container {
         max-width: 340px;

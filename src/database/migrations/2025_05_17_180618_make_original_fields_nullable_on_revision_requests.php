@@ -9,7 +9,7 @@ class MakeOriginalFieldsNullableOnRevisionRequests extends Migration
     public function up()
     {
         Schema::table('revision_requests', function (Blueprint $table) {
-            // 既存カラムを nullable + default NULL に変更
+   
             $table->time('original_clock_in')
                   ->nullable()
                   ->default(null)
@@ -27,7 +27,7 @@ class MakeOriginalFieldsNullableOnRevisionRequests extends Migration
     public function down()
     {
         Schema::table('revision_requests', function (Blueprint $table) {
-            // down() は必要ならリバートを書く
+ 
         });
     }
 }

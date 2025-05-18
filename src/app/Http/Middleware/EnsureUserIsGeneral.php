@@ -17,7 +17,7 @@ class EnsureUserIsGeneral
     public function handle($request, Closure $next)
 {
     if (auth()->check() && auth()->user()->is_admin) {
-        abort(403);               // 管理者は別ルートへ
+        abort(403);              
     }
     return $next($request);
 }

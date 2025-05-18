@@ -15,7 +15,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_dummy',      // ★追加
+        'is_dummy',     
         'is_admin',
     ];
 
@@ -26,6 +26,6 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'is_dummy'          => 'boolean',   // ★追加
+        'is_dummy'          => 'boolean',   
     ];
 }

@@ -1,4 +1,4 @@
-{{-- 申請一覧（一般 / 管理者 共通）--}}
+{{-- resources/views/stamp_correction_request_list.blade.php --}}
 @extends('layouts.app')
 
 @section('title','申請一覧')
@@ -30,8 +30,12 @@
       <table class="stampcr-table">
           <thead>
               <tr>
-                  <th>状態</th><th>名前</th><th>対象日</th>
+                  <th>状態</th>
+                  <th>名前</th>
+                  <th>対象日</th>
                   <th>申請理由</th>
+                  <th>申請日時</th>
+                  <th>詳細</th>
                   @if($isAdmin)<th>操作</th>@endif
               </tr>
           </thead>
@@ -45,14 +49,22 @@
                       </span>
                   </td>
 
-                  {{-- 名前 & 対象日 --}}
+                  {{-- 名前 --}}
                   <td>{{ $r->user->name }}</td>
-                  <td>{{ optional($r->attendance)->date
-                          ? \Carbon\Carbon::parse($r->attendance->date)->format('Y/m/d')
-                          : '—' }}</td>
+
+                  {{-- 対象日 --}}
+                  <td>{{ \Carbon\Carbon::parse($r->attendance->date)->format('Y/m/d') }}</td>
 
                   {{-- 申請理由 --}}
                   <td>{{ $r->proposed_remarks }}</td>
+
+                  {{-- 申請日時 --}}
+                  <td>{{ $r->created_at->format('Y/m/d') }}</td>
+
+                  {{-- 詳細リンク --}}
+                  <td>
+                      <a href="{{ route('attendance.detail', ['key' => $r->attendance->id]) }}">詳細</a>
+                  </td>
 
                   {{-- 操作列（管理者のみ） --}}
                   @if($isAdmin)
@@ -72,7 +84,7 @@
               </tr>
           @empty
               <tr>
-                  <td colspan="{{ $isAdmin ? 5 : 4 }}" class="text-center">データがありません</td>
+                  <td colspan="{{ $isAdmin ? 7 : 6 }}" class="text-center">データがありません</td>
               </tr>
           @endforelse
           </tbody>

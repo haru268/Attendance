@@ -15,11 +15,10 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password'          => bcrypt('password'),
             'remember_token'    => Str::random(10),
-            'is_dummy'          => false,            // ★デフォルトは本物ユーザー
+            'is_dummy'          => false,            
         ];
     }
 
-    /** ダミーユーザー用の状態 */
     public function dummy()
     {
         return $this->state(fn () => ['is_dummy' => true]);

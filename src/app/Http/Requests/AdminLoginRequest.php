@@ -6,17 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class AdminLoginRequest extends FormRequest
 {
-    /**
-     * 認可を許可
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * バリデーションルール
-     */
     public function rules(): array
     {
         return [
@@ -25,9 +19,6 @@ class AdminLoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * カスタムエラーメッセージ
-     */
     public function messages(): array
     {
         return [

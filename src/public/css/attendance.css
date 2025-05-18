@@ -1,8 +1,4 @@
-/* =======================================================
-   attendance.css   ★全文貼り替え
-   ======================================================= */
 
-/* ---- ベース ---- */
 html,
 body {
     margin: 0;
@@ -14,7 +10,7 @@ main {
     background: #f0eff2
 }
 
-/* ---- コンテナ ---- */
+
 .attendance-container {
     display: flex;
     flex-direction: column;
@@ -27,7 +23,6 @@ main {
     margin-bottom: 2rem
 }
 
-/* ---- ステータス表示 ---- */
 .status-badge {
     background: #ddd;
     color: #333;
@@ -37,7 +32,7 @@ main {
     font-weight: bold;
 }
 
-/* ---- 日付・時刻 ---- */
+
 .date-display {
     font-size: 2rem
 }
@@ -47,18 +42,14 @@ main {
     font-weight: bold
 }
 
-/* ---- ボタンエリア ---- */
+
 #buttonArea {
     display: flex;
     justify-content: center;
     gap: 5rem
 }
 
-/* =======================================================
-   打刻ボタン
-   ======================================================= */
 
-/* 共通 */
 .btn-clock {
     border: none;
     border-radius: 20px;
@@ -78,30 +69,29 @@ main {
     opacity: .8
 }
 
-/* 種類ごと（色分け） */
+
 .btn-clock-in {
-    background: #28a745
+    background: black
 }
 
-/* 出勤＝緑   */
+
 .btn-clock-out {
-    background: #dc3545
+    background: black
 }
 
-/* 退勤＝赤   */
+
 .btn-break-in {
-    background: #17a2b8
-}
-
-/* 休憩入＝青 */
-.btn-break-out {
-    background: #ffc107;
+    background: white;
     color: #000
 }
 
-/* 休憩戻＝黄 */
 
-/* ---- 退勤後メッセージ ---- */
+.btn-break-out {
+    background: white;
+    color: #000
+}
+
+
 .completed-message {
     font-size: 2rem;
     font-weight: bold;

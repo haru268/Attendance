@@ -14,7 +14,7 @@ class AddProposedAndOriginalFieldsToRevisionRequests extends Migration
     public function up()
 {
     Schema::table('revision_requests', function (Blueprint $table) {
-        // すでに無ければ追加
+   
         if (!Schema::hasColumn('revision_requests','original_clock_in')) {
             $table->time('original_clock_in')->nullable()->after('attendance_id');
             $table->time('original_clock_out')->nullable()->after('original_clock_in');

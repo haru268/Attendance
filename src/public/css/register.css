@@ -1,8 +1,4 @@
-/* ─────────────────────────────── */
-/* 会員登録ページ専用スタイル         */
-/* ─────────────────────────────── */
 
-/* ページ全体を白背景に */
 html,
 body {
     margin: 0;
@@ -11,7 +7,6 @@ body {
     font-family: sans-serif;
 }
 
-/* コンテナ */
 .register-container {
     max-width: 500px;
     margin: 4rem auto 2rem;
@@ -19,7 +14,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 見出し */
 .register-container h1 {
     text-align: center;
     font-size: 2rem;
@@ -27,7 +21,6 @@ body {
     font-weight: bold;
 }
 
-/* フォームレイアウト */
 .register-container form {
     display: flex;
     flex-direction: column;
@@ -49,7 +42,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 登録ボタン */
 .btn-submit {
     width: 100%;
     padding: 0.75rem 1rem;
@@ -62,7 +54,6 @@ body {
     margin-top: 1rem;
 }
 
-/* 「ログインはこちら」リンク */
 .link-to-login {
     text-align: center;
     margin-top: 1rem;
@@ -77,7 +68,6 @@ body {
     text-decoration: underline;
 }
 
-/* 全体エラーリスト */
 .error-list {
     margin-bottom: 1rem;
     color: #d32f2f;
@@ -89,7 +79,6 @@ body {
     margin-bottom: 0.25rem;
 }
 
-/* 個別エラーメッセージ */
 .error {
     display: block;
     margin-top: -0.75rem;

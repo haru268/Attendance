@@ -16,7 +16,7 @@ class AddRequestedColsToRevisionRequests extends Migration
     Schema::table('revision_requests', function (Blueprint $table) {
         $table->time('requested_clock_in')->nullable()->after('original_remarks');
         $table->time('requested_clock_out')->nullable()->after('requested_clock_in');
-        // 備考は既に remarks 列があるので追加不要
+
     });
 }
 

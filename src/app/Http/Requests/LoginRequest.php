@@ -8,7 +8,7 @@ class LoginRequest extends FormRequest
 {
     public function authorize()
     {
-        return true;                // 誰でも通す
+        return true;           
     }
 
     public function rules()
@@ -19,7 +19,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /* 任意：項目名を日本語にしたい場合 */
     public function attributes()
     {
         return [

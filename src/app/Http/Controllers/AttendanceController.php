@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
-    /*─────────────────────────*
-     |  1. 打刻トップ
-     *─────────────────────────*/
+
     public function index()
     {
         $user  = Auth::user();
@@ -37,9 +35,7 @@ class AttendanceController extends Controller
         return view('attendance', compact('status'));
     }
 
-    /*─────────────────────────*
-     |  2. 打刻 POST
-     *─────────────────────────*/
+
     public function clock(Request $request)
     {
         $request->validate([
@@ -89,9 +85,7 @@ class AttendanceController extends Controller
         return back();
     }
 
-    /*─────────────────────────*
-     |  3. 月次勤怠一覧
-     *─────────────────────────*/
+
     public function list(Request $request)
     {
         $user  = Auth::user();
@@ -145,15 +139,13 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /*─────────────────────────*
-     |  4. 詳細表示
-     *─────────────────────────*/
+
     public function detail(Request $request, $key)
     {
         $staffId = $request->query('staff_id');
         $user    = $staffId ? User::findOrFail($staffId) : Auth::user();
 
-        /* ── Attendance を取得 or ダミー ─────────────── */
+
         if (ctype_digit($key)) {
             $attendance = Attendance::with('breakRecords', 'user')->findOrFail((int) $key);
             $detail     = $attendance;
@@ -178,14 +170,14 @@ class AttendanceController extends Controller
             ];
         }
 
-        /* ── break 配列に加工 ──────────────────────── */
+
         $detail->breaks = collect($detail->breakRecords ?? [])
             ->map(fn($b) => [
                 'start' => optional($b->break_start)->format('H:i'),
                 'end'   => optional($b->break_end  )->format('H:i'),
             ])->toArray();
 
-        /* ── 承認待ちチェック ─────────────────────── */
+
         $hasPending      = false;
         $pendingRequest  = null;
 
@@ -203,14 +195,12 @@ class AttendanceController extends Controller
         return view('attendance_detail', compact('detail', 'hasPending', 'pendingRequest'));
     }
 
-    /*─────────────────────────*
-     |  5. 修正申請 (更新)
-     *─────────────────────────*/
+
     public function update(AttendanceRequest $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
 
-        /* 既に保留中がある場合は弾く */
+
         if (RevisionRequest::where([
                 ['user_id', Auth::id()],
                 ['attendance_id', $id],
@@ -235,9 +225,7 @@ class AttendanceController extends Controller
         return back()->with('success', '修正申請を送信しました。管理者の承認をお待ちください。');
     }
 
-    /*─────────────────────────*
-     |  6. 管理者：スタッフ別月次
-     *─────────────────────────*/
+
     public function staffAttendance(Request $request, $id)
     {
         $monthTop     = Carbon::parse($request->query('date', now()->startOfMonth()));
@@ -246,11 +234,11 @@ class AttendanceController extends Controller
         $currentMonth = $monthTop->format('Y/m');
         $today        = Carbon::today();
 
-        /* スタッフ取得（dummy/real 判定は is_dummy フィールド） */
+
         $staff = User::findOrFail($id);
 
         if ($staff->is_dummy) {
-            /* ─ ダミー：月初〜今日まで固定ダミーデータ ─ */
+
             $attendances = collect();
             if (! $monthTop->gt($today->copy()->startOfMonth())) {
                 $end = $monthTop->isSameMonth($today) ? $today : $monthTop->copy()->endOfMonth();
@@ -266,7 +254,7 @@ class AttendanceController extends Controller
                 }
             }
         } else {
-            /* ─ 実ユーザー：既存ロジック ─ */
+
             $attendances = Attendance::with('breakRecords')
                 ->where('user_id', $id)
                 ->whereYear('date', $monthTop->year)

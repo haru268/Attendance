@@ -1,6 +1,4 @@
-/* ========== 管理者：日次勤怠一覧 (admin_attendance_list.css) ========== */
 
-/* 共通 -------------------------------------------------------------- */
 html,
 body {
     margin: 0;
@@ -17,7 +15,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 見出し ------------------------------------------------------------ */
 .adminatt-header {
     display: flex;
     align-items: center;
@@ -38,7 +35,6 @@ body {
     color: #333;
 }
 
-/* 日付ナビ (白カード) ---------------------------------------------- */
 .adminatt-daybox {
     display: flex;
     justify-content: space-between;
@@ -82,7 +78,6 @@ body {
     margin-right: .5rem;
 }
 
-/* テーブル ---------------------------------------------------------- */
 .adminatt-table {
     width: 100%;
     border-collapse: collapse;
@@ -128,7 +123,6 @@ body {
     opacity: .8;
 }
 
-/* レスポンシブ ------------------------------------------------------ */
 @media(max-width:850px) {
     .adminatt-header h2 {
         font-size: 1.5rem;

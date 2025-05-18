@@ -1,8 +1,4 @@
-/* ============== 管理者：スタッフ月次勤怠一覧 (admin_attendance_staff.css) ============== */
-/* ほかの管理者ページ (adminatt- / adminstaff-) とはクラス名が衝突しません              */
-/* ===================================================================================== */
 
-/* 全体 ------------------------------------------------------------------------------ */
 html,
 body {
     margin: 0;
@@ -12,7 +8,6 @@ body {
     font-weight: bold;
 }
 
-/* コンテナ -------------------------------------------------------------------------- */
 .adminattstaff-container {
     max-width: 900px;
     margin: 0 auto;
@@ -20,7 +15,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 見出し --------------------------------------------------------------------------- */
 .adminattstaff-header {
     display: flex;
     align-items: center;
@@ -40,7 +34,6 @@ body {
     color: #333;
 }
 
-/* 月ナビ (白カード) ----------------------------------------------------------------- */
 .adminattstaff-monthbox {
     display: flex;
     justify-content: space-between;
@@ -84,7 +77,6 @@ body {
     margin-right: .5rem;
 }
 
-/* テーブル ------------------------------------------------------------------------- */
 .adminattstaff-table {
     width: 100%;
     border-collapse: collapse;
@@ -121,7 +113,6 @@ body {
     color: #000;
 }
 
-/* 詳細リンク ----------------------------------------------------------------------- */
 .adminattstaff-link {
     color: #000;
     text-decoration: none;
@@ -131,7 +122,6 @@ body {
     opacity: .8;
 }
 
-/* レスポンシブ --------------------------------------------------------------------- */
 @media(max-width:850px) {
     .adminattstaff-header h2 {
         font-size: 1.5rem;

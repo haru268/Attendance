@@ -11,8 +11,8 @@ class CreateBreakRecordsTable extends Migration
         Schema::create('break_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('attendance_id')->constrained()->cascadeOnDelete();
-            $table->time('break_start')->nullable();   // ここを最初から “break_start” 名で作る
-            $table->time('break_end')->nullable();     // 同上
+            $table->time('break_start')->nullable();  
+            $table->time('break_end')->nullable();     
             $table->timestamps();
         });
     }

@@ -12,22 +12,13 @@ class BreakRecord extends Model
 
     protected $table = 'break_records';
 
-    /**
-     * マスアサインメント可能な属性
-     * - attendance_id: Attendance モデルの外部キー
-     * - break_start: 休憩開始時刻
-     * - break_end: 休憩終了時刻
-     */
+
     protected $fillable = [
         'attendance_id',
         'break_start',   
         'break_end',     
     ];
 
-    /**
-     * 型キャスト
-     * H:i フォーマットの日付として扱う
-     */
     protected $casts = [
         'break_start' => 'datetime:H:i',
         'break_end'   => 'datetime:H:i',

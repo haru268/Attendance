@@ -18,7 +18,7 @@ class AdminOnly
 public function handle($request, Closure $next)
 {
     if (!auth()->check() || !auth()->user()->is_admin) {
-        abort(403);           // 一般ユーザーは拒否
+        abort(403);           
     }
     return $next($request);
 }

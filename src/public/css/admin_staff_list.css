@@ -1,8 +1,4 @@
-/* ================= 管理者：スタッフ一覧 (admin_staff_list.css) ================= */
-/* クラス名 adminstaff- で統一                                                   */
-/* ============================================================================ */
 
-/* 画面全体 ------------------------------------------------------------------ */
 html,
 body {
     margin: 0;
@@ -12,7 +8,6 @@ body {
     font-weight: bold;
 }
 
-/* コンテナ ------------------------------------------------------------------ */
 .adminstaff-container {
     max-width: 900px;
     margin: 0 auto;
@@ -20,7 +15,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 見出し -------------------------------------------------------------------- */
 .adminstaff-header {
     display: flex;
     align-items: center;
@@ -40,20 +34,17 @@ body {
     color: #333;
 }
 
-/* 白カード ------------------------------------------------------------------ */
 .adminstaff-card {
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
 }
 
-/* テーブル ------------------------------------------------------------------ */
 .adminstaff-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-/* 共通セル ------------------------------------------------------------------ */
 .adminstaff-table th,
 .adminstaff-table td {
     padding: .75rem 1rem;
@@ -61,13 +52,11 @@ body {
     text-align: center;
 }
 
-/* ヘッダー行 */
 .adminstaff-table th {
     color: #999;
     border-bottom: 2px solid #ccc;
 }
 
-/* ボディ行 */
 .adminstaff-table tbody tr {
     border-bottom: 2px solid #ccc;
 }
@@ -80,9 +69,6 @@ body {
     color: #999;
 }
 
-/* ── 列幅と寄せ ───────────────────────────────────────── */
-
-/* 名前列：30% ／ ヘッダーもデータも右寄せ */
 .adminstaff-table th:nth-child(1),
 .adminstaff-table td:nth-child(1) {
     width: 30%;
@@ -90,17 +76,14 @@ body {
 }
 .adminstaff-table th:nth-child(1) {
     padding-right: 3rem;
-    /* ← 1rem → 0.3rem など、お好みで調整 */
 }
 
-/* メールアドレス列：50% ／ 中央寄せ（既定） */
 .adminstaff-table th:nth-child(2),
 .adminstaff-table td:nth-child(2) {
     width: 50%;
     text-align: center;
 }
 
-/* 詳細列：20% ／ ヘッダーもデータも左寄せ */
 .adminstaff-table th:nth-child(3),
 .adminstaff-table td:nth-child(3) {
     width: 20%;
@@ -108,12 +91,8 @@ body {
 }
 .adminstaff-table th:nth-child(3) {
     padding-left: .3rem;
-    /* ← 元 1rem → 0.3rem など好みで調整 */
 }
 
-
-
-/* 詳細リンク -------------------------------------------------------------- */
 .adminstaff-link {
     color: #000;
     text-decoration: none;
@@ -123,7 +102,6 @@ body {
     opacity: .8;
 }
 
-/* レスポンシブ ------------------------------------------------------------ */
 @media (max-width: 850px) {
     .adminstaff-header h2 {
         font-size: 1.5rem;

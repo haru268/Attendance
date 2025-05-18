@@ -1,4 +1,4 @@
-<?php                           /* database/migrations/xxxx_xx_xx_add_proposed_fields_to_revision_requests_table.php */
+<?php                         
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

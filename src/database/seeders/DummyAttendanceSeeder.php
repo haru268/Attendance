@@ -3,14 +3,14 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Attendance;           // ★モデル名は実際のものに合わせて
+use App\Models\Attendance;          
 use Carbon\Carbon;
 
 class DummyAttendanceSeeder extends Seeder
 {
     public function run(): void
     {
-        // 例：2025‑05‑03 の勤怠
+      
         $att = Attendance::updateOrCreate(
             ['id' => '20250503'],
             [
@@ -22,8 +22,8 @@ class DummyAttendanceSeeder extends Seeder
             ]
         );
 
-        // 休憩は 1 レコードだけ残す
-        $att->breaks()->delete();           // 既存をリセット（あれば）
+       
+        $att->breaks()->delete();        
         $att->breaks()->create([
             'start' => '12:00',
             'end'   => '12:45',
