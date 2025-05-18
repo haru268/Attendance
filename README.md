@@ -28,6 +28,6 @@ phpMyAdmin	http://localhost:8080
 
 初期アカウント
 管理者	admin@example.com / password
-一般サンプル	user@example.com / password (Seederで作成済み)
+一般サンプル	user@example.com / password (Seederで作成済み)（勤怠データは自動で入っていません。手動で打刻してください）
 
 ![スクリーンショット (124)](https://github.com/user-attachments/assets/49a68e82-2bb8-458e-8ee6-2a4c4c1a3450)
