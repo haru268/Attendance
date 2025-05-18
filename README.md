@@ -26,8 +26,9 @@ phpMyAdmin	http://localhost:8080
 ・Fortify
 ・PHPUnit
 
-初期アカウント
+初期アカウント(Seederで作成済み)
 管理者	admin@example.com / password
-一般サンプル	user@example.com / password (Seederで作成済み)（勤怠データは自動で入っていません。手動で打刻してください）
+一般サンプル	user@example.com / password  / 手動で「出勤→休憩→退勤」を試したい場合
+一般サンプル2 seeduser@example.com  / password / 一覧や詳細表示のデータ確認用に直近30日分シード済み
 
 ![スクリーンショット (124)](https://github.com/user-attachments/assets/49a68e82-2bb8-458e-8ee6-2a4c4c1a3450)
