@@ -12,13 +12,13 @@ Laravel環境構築
 ・php artisan db:seed
 
 .env の変更内容
-# アプリ基本設定
+アプリ基本設定
 APP_NAME=Laravel
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://localhost
 
-# データベース
+データベース
 DB_CONNECTION=mysql
 DB_HOST=mysql
 DB_PORT=3306
