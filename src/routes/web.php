@@ -14,8 +14,17 @@ use App\Http\Requests\AttendanceRequest;
 use App\Http\Requests\AdminLoginRequest;
 
 /* =========================================================
+|  トップページ
+|  テストで `GET /` に 200 を返す必要があるため、OK レスポンスを返します
+========================================================= */
+Route::get('/', function () {
+    return response('OK', 200);
+});
+
+/* =========================================================
 |  一般ユーザー：登録 & ログイン
 ========================================================= */
+
 Route::get('/register', fn () => view('register'))->name('register.form');
 
 Route::post('/register', function (RegisterRequest $r) {
@@ -39,7 +48,7 @@ Route::post('/login', function (LoginRequest $r) {
         }
         return redirect()->route('attendance');
     }
-    return back()->withErrors(['email' => '認証に失敗しました。'])->withInput();
+    return back()->withErrors(['email' => 'ログイン情報が登録されていません'])->withInput();
 })->name('login');
 
 /* =========================================================
@@ -52,13 +61,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/attendance/clock',        [AttendanceController::class, 'clock'])->name('attendance.clock');
     Route::get('/attendance/list',          [AttendanceController::class, 'list'])->name('attendance.list');
     Route::get('/attendance/{key}',         [AttendanceController::class, 'detail'])
-         ->where('key', '[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
          ->name('attendance.detail');
     Route::patch('/attendance/update/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
 
     /* ---------- 申請一覧（一般 / 管理者 共通の実体はここ） ---------- */
     Route::get('/stamp_correction_request/list', function (Request $req) {
-
         $status = $req->query('status', 'pending');          // pending / approved
         $isAdm  = Auth::user()->is_admin;                    // true → 全件、false → 自分のみ
 
@@ -66,7 +73,7 @@ Route::middleware('auth')->group(function () {
                    ->where('status', $status)
                    ->orderByDesc('created_at');
 
-        if (!$isAdm) {                                       // 一般ユーザー
+        if (! $isAdm) {                                      // 一般ユーザー
             $query->where('user_id', Auth::id());
         }
         $revisionRequests = $query->get();
@@ -94,7 +101,7 @@ Route::get('/admin/login', fn () => view('admin_login'))->name('admin.login.form
 
 Route::post('/admin/login', function (AdminLoginRequest $r) {
     if (Auth::attempt($r->only('email', 'password'))) {
-        if (!Auth::user()->is_admin) {
+        if (! Auth::user()->is_admin) {
             Auth::logout();
             return back()->withErrors(['email' => '管理者アカウントのみログインできます。'])->withInput();
         }
@@ -116,7 +123,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         $nextDate = $sel->copy()->addDay()->toDateString();
 
         $attendances = collect();
-        if (!$sel->gt($today)) {
+        if (! $sel->gt($today)) {
             $users = User::where('is_admin', false)->get();
             foreach ($users as $u) {
                 if ($u->is_dummy) {
@@ -127,15 +134,24 @@ Route::prefix('admin')->middleware('auth')->group(function () {
                     ]);
                     continue;
                 }
-                if ($u->created_at->toDateString() > $sel->toDateString()) continue;
+                if ($u->created_at->toDateString() > $sel->toDateString()) {
+                    continue;
+                }
 
                 $att = Attendance::with('breakRecords')
-                       ->where('user_id', $u->id)->whereDate('date', $sel)->first();
-                if (!$att) continue;
+                       ->where('user_id', $u->id)
+                       ->whereDate('date', $sel)
+                       ->first();
+                if (! $att) {
+                    continue;
+                }
 
-                $sec  = $att->breakRecords->sum(fn ($b) => strtotime($b->break_end ?: now()) - strtotime($b->break_start));
+                $sec  = $att->breakRecords->sum(fn ($b) =>
+                    strtotime($b->break_end ?: now()) - strtotime($b->break_start)
+                );
                 $work = ($att->clock_in && $att->clock_out)
-                      ? strtotime($att->clock_out) - strtotime($att->clock_in) - $sec : 0;
+                      ? strtotime($att->clock_out) - strtotime($att->clock_in) - $sec
+                      : 0;
 
                 $attendances->push((object)[
                     'id'         => $att->id,
@@ -143,7 +159,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
                     'created_at' => Carbon::parse($att->date),
                     'clockIn'    => optional($att->clock_in)->format('H:i') ?: '-',
                     'clockOut'   => optional($att->clock_out)->format('H:i') ?: '-',
-                    'breakTime'  => gmdate('H:i', $sec),
+                    'breakTime'  => $sec ? gmdate('H:i', $sec) : '-',
                     'totalTime'  => $work ? gmdate('H:i', $work) : '-',
                 ]);
             }
@@ -153,7 +169,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
                ->with('currentDateDisplay', $sel->format('Y/m/d'));
     })->name('admin.attendance.list');
 
-    /* ---------- 勤怠詳細（実処理は共通 Controller） ---------- */
+    /* ---------- 勤怠詳細（共通 Controller 処理） ---------- */
     Route::get('/attendance/detail/{key}', [AttendanceController::class, 'detail'])
          ->where('key', '[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]+')
          ->name('admin.attendance.detail');
@@ -162,34 +178,36 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/attendance/staff/{id}', [AttendanceController::class, 'staffAttendance'])
          ->name('admin.attendance.staff');
 
-    /* ---------- 申請一覧 (管理者 URL) ---------- */
+    /* ---------- 申請一覧 (管理者 URL からリダイレクト) ---------- */
     Route::get('/stamp_correction_request/list', function (Request $r) {
-        // /admin/... で来ても中身は共通ルートへ
         return redirect()->route('stamp_correction_request.list', $r->query());
     })->name('admin.stamp_correction_request.list');
 
     /* ---------- 修正申請承認 ---------- */
     Route::post('/stamp_correction_request/approve/{id}', function ($id) {
-
         $rev = RevisionRequest::where('id', $id)->where('status', 'pending')->firstOrFail();
         $att = $rev->attendance;
 
-        /* Attendance 反映 */
+        // Attendance に反映
         $att->clock_in  = $rev->proposed_clock_in;
         $att->clock_out = $rev->proposed_clock_out;
         $att->remarks   = $rev->proposed_remarks;
         $att->save();
 
-        /* 休憩更新 */
-        $att->breakRecords()->delete();
-        foreach ($rev->breaks ?? [] as $bk) {
-            $att->breakRecords()->create([
-                'break_start' => $bk['start'] ?: null,
-                'break_end'   => $bk['end']   ?: null,
-            ]);
-        }
+        // 休憩更新
+$att->breakRecords()->delete();
 
-        /* ステータス変更 */
+// $rev->breaks は JSON 文字列なので、一旦デコード
+$breaks = json_decode($rev->breaks, true) ?: [];
+
+foreach ($breaks as $bk) {
+    $att->breakRecords()->create([
+        'break_start' => $bk['start'] ?: null,
+        'break_end'   => $bk['end']   ?: null,
+    ]);
+}
+
+        // ステータス変更
         $rev->status = 'approved';
         $rev->save();
 
@@ -210,3 +228,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         return redirect('/admin/login');
     })->name('admin.logout');
 });
+
+/* =========================================================
+|  管理者向け：スタッフ勤怠 CSV エクスポート
+========================================================= */
+Route::get(
+    '/admin/attendance/staff/{id}/export',
+    [AttendanceController::class, 'exportStaffCsv']
+)->name('admin.attendance.staff.export')
+  ->middleware('auth');

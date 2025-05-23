@@ -9,18 +9,19 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
-
+    // 打刻画面表示
     public function index()
     {
         $user  = Auth::user();
         $today = Carbon::today()->toDateString();
 
         $attendance = Attendance::where('user_id', $user->id)
-                                ->whereDate('date', $today)
-                                ->first();
+                                 ->whereDate('date', $today)
+                                 ->first();
 
         if (! $attendance) {
             $status = '勤務外';
@@ -35,7 +36,7 @@ class AttendanceController extends Controller
         return view('attendance', compact('status'));
     }
 
-
+    // 打刻アクション
     public function clock(Request $request)
     {
         $request->validate([
@@ -53,24 +54,21 @@ class AttendanceController extends Controller
         switch ($request->type) {
             case 'clock_in':
                 if (! $attendance->clock_in) {
-                    $attendance->clock_in = now();
+                    $attendance->clock_out = $time;
                     $attendance->save();
                 }
                 break;
-
             case 'clock_out':
                 if (! $attendance->clock_out) {
-                    $attendance->clock_out = now();
+                    $attendance->clock_out = $time;
                     $attendance->save();
                 }
                 break;
-
             case 'break_in':
                 if (! $attendance->breakRecords()->whereNull('break_end')->exists()) {
                     $attendance->breakRecords()->create(['break_start' => now()]);
                 }
                 break;
-
             case 'break_out':
                 $open = $attendance->breakRecords()
                                    ->whereNull('break_end')
@@ -82,10 +80,11 @@ class AttendanceController extends Controller
                 }
                 break;
         }
+
         return back();
     }
 
-
+    // 一般ユーザー用勤怠一覧
     public function list(Request $request)
     {
         $user  = Auth::user();
@@ -123,28 +122,20 @@ class AttendanceController extends Controller
                 'clockOut'  => optional($a->clock_out)->format('H:i') ?? '-',
                 'breakTime' => $breakSec ? gmdate('H:i', $breakSec) : '-',
                 'totalTime' => ($a->clock_in && $a->clock_out)
-                             ? gmdate('H:i',
-                                 strtotime($a->clock_out) -
-                                 strtotime($a->clock_in) - $breakSec)
+                             ? gmdate('H:i', strtotime($a->clock_out) - strtotime($a->clock_in) - $breakSec)
                              : '-',
             ];
         });
 
-        return view('attendance_list', [
-            'attendances'   => $attendances,
-            'prev'          => $prev,
-            'next'          => $next,
-            'currentMonth'  => $currentMonth,
-            'noRecords'     => $attendances->isEmpty(),
-        ]);
+        return view('attendance_list', compact('attendances', 'prev', 'next', 'currentMonth'))
+               ->with('noRecords', $attendances->isEmpty());
     }
 
-
+    // 勤怠詳細・修正申請画面
     public function detail(Request $request, $key)
     {
         $staffId = $request->query('staff_id');
         $user    = $staffId ? User::findOrFail($staffId) : Auth::user();
-
 
         if (ctype_digit($key)) {
             $attendance = Attendance::with('breakRecords', 'user')->findOrFail((int) $key);
@@ -170,22 +161,19 @@ class AttendanceController extends Controller
             ];
         }
 
-
         $detail->breaks = collect($detail->breakRecords ?? [])
-            ->map(fn($b) => [
+            ->map(fn ($b) => [
                 'start' => optional($b->break_start)->format('H:i'),
-                'end'   => optional($b->break_end  )->format('H:i'),
+                'end'   => optional($b->break_end)->format('H:i'),
             ])->toArray();
 
-
-        $hasPending      = false;
-        $pendingRequest  = null;
-
+        $hasPending     = false;
+        $pendingRequest = null;
         if ($detail->id) {
             $pendingRequest = RevisionRequest::where([
                                     ['attendance_id', $detail->id],
                                     ['user_id', Auth::id()],
-                                    ['status', 'pending']
+                                    ['status', 'pending'],
                                 ])->latest('created_at')->first();
             if ($pendingRequest) {
                 $hasPending = true;
@@ -195,11 +183,10 @@ class AttendanceController extends Controller
         return view('attendance_detail', compact('detail', 'hasPending', 'pendingRequest'));
     }
 
-
+    // 修正申請送信
     public function update(AttendanceRequest $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
-
 
         if (RevisionRequest::where([
                 ['user_id', Auth::id()],
@@ -210,22 +197,22 @@ class AttendanceController extends Controller
         }
 
         RevisionRequest::create([
-            'user_id'             => Auth::id(),
-            'attendance_id'       => $id,
-            'original_clock_in'   => $attendance->clock_in,
-            'original_clock_out'  => $attendance->clock_out,
-            'original_remarks'    => $attendance->remarks,
-            'proposed_clock_in'   => $request->clock_in,
-            'proposed_clock_out'  => $request->clock_out,
-            'proposed_remarks'    => $request->remarks,
-            'status'              => 'pending',
-            'breaks'              => $request->breaks,
+            'user_id'           => Auth::id(),
+            'attendance_id'     => $id,
+            'original_clock_in' => $attendance->clock_in,
+            'original_clock_out'=> $attendance->clock_out,
+            'original_remarks'  => $attendance->remarks,
+            'proposed_clock_in' => $request->clock_in,
+            'proposed_clock_out'=> $request->clock_out,
+            'proposed_remarks'  => $request->remarks,
+            'status'            => 'pending',
+            'breaks'            => $request->breaks,
         ]);
 
         return back()->with('success', '修正申請を送信しました。管理者の承認をお待ちください。');
     }
 
-
+    // スタッフ別勤怠一覧
     public function staffAttendance(Request $request, $id)
     {
         $monthTop     = Carbon::parse($request->query('date', now()->startOfMonth()));
@@ -234,11 +221,9 @@ class AttendanceController extends Controller
         $currentMonth = $monthTop->format('Y/m');
         $today        = Carbon::today();
 
-
         $staff = User::findOrFail($id);
 
         if ($staff->is_dummy) {
-
             $attendances = collect();
             if (! $monthTop->gt($today->copy()->startOfMonth())) {
                 $end = $monthTop->isSameMonth($today) ? $today : $monthTop->copy()->endOfMonth();
@@ -254,7 +239,6 @@ class AttendanceController extends Controller
                 }
             }
         } else {
-
             $attendances = Attendance::with('breakRecords')
                 ->where('user_id', $id)
                 ->whereYear('date', $monthTop->year)
@@ -263,9 +247,7 @@ class AttendanceController extends Controller
                 ->orderBy('date')
                 ->get()
                 ->map(function ($a) {
-                    $sec = $a->breakRecords->sum(fn($b) =>
-                        strtotime($b->break_end ?: now()) - strtotime($b->break_start)
-                    );
+                    $sec     = $a->breakRecords->sum(fn ($b) => strtotime($b->break_end ?: now()) - strtotime($b->break_start));
                     $workSec = ($a->clock_in && $a->clock_out)
                              ? strtotime($a->clock_out) - strtotime($a->clock_in) - $sec
                              : 0;
@@ -282,8 +264,52 @@ class AttendanceController extends Controller
                 });
         }
 
-        return view('admin_attendance_staff', compact(
-            'staff', 'attendances', 'prevDate', 'nextDate'
-        ))->with('currentDateDisplay', $currentMonth);
+        return view('admin_attendance_staff', compact('staff', 'attendances', 'prevDate', 'nextDate'))
+               ->with('currentDateDisplay', $currentMonth);
+    }
+
+    /**
+     * スタッフ別勤怠一覧の CSV エクスポート
+     */
+    public function exportStaffCsv(Request $request, $id): StreamedResponse
+    {
+        $user  = User::findOrFail($id);
+        $month = $request->query('month', now()->format('Y-m'));
+        [$year, $m] = explode('-', $month);
+
+        $records = Attendance::with('breakRecords')
+            ->where('user_id', $user->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $m)
+            ->orderBy('date')
+            ->get();
+
+        $filename = "attendance_{$user->id}_{$month}.csv";
+
+        return response()->streamDownload(function () use ($records) {
+            $out = fopen('php://output', 'w');
+            // Excel で文字化けしないよう BOM を出力
+            fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            // ヘッダー行
+            fputcsv($out, ['日付', '出勤', '退勤', '休憩合計', '備考']);
+
+            foreach ($records as $att) {
+                $sec      = $att->breakRecords->sum(fn($b) => strtotime($b->break_end ?: now()) - strtotime($b->break_start));
+                $breakSum = gmdate('H:i', $sec);
+
+                fputcsv($out, [
+                    $att->date,
+                    optional($att->clock_in)->format('H:i') ?? '',
+                    optional($att->clock_out)->format('H:i') ?? '',
+                    $breakSum,
+                    $att->remarks,
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 }

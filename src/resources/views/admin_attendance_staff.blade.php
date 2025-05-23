@@ -1,7 +1,7 @@
 {{-- resources/views/admin_attendance_staff.blade.php --}}
 @php
     // 表示対象年月を Carbon でパース
-    $monthTop = \Carbon\Carbon::parse(request('date', now()->startOfMonth()));
+    $monthTop     = \Carbon\Carbon::parse(request('date', now()->startOfMonth()));
     $currentMonth = $monthTop->format('Y/m');
 @endphp
 
@@ -16,18 +16,18 @@
 @section('content')
 <div class="adminattstaff-container">
 
-    {{-- ▲ 見出し（黒い縦棒＋タイトル） --}}
+    {{-- ▲ 見出し --}}
     <div class="adminattstaff-header">
         <span class="adminattstaff-bar"></span>
         <h2>{{ $staff->name }}さんの勤怠一覧</h2>
     </div>
 
-    {{-- ▼ 月切り替えナビ（白カード） --}}
+    {{-- ▼ 月切り替えナビ --}}
     <div class="adminattstaff-monthbox">
         <a href="{{ route('admin.attendance.staff', ['id' => $staff->id, 'date' => $prevDate]) }}"
            class="adminattstaff-monthlink prev">
-           <img src="{{ asset('img/arrow.png') }}" alt="前月" class="adminattstaff-icon">
-           前月
+            <img src="{{ asset('img/arrow.png') }}" alt="前月" class="adminattstaff-icon">
+            前月
         </a>
 
         <span class="adminattstaff-monthbox-date">
@@ -37,8 +37,8 @@
 
         <a href="{{ route('admin.attendance.staff', ['id' => $staff->id, 'date' => $nextDate]) }}"
            class="adminattstaff-monthlink next">
-           翌月
-           <img src="{{ asset('img/arrow.png') }}" alt="翌月" class="adminattstaff-icon rotated">
+            翌月
+            <img src="{{ asset('img/arrow.png') }}" alt="翌月" class="adminattstaff-icon rotated">
         </a>
     </div>
 
@@ -67,12 +67,8 @@
                     <td>{{ $att->breakTime }}</td>
                     <td>{{ $att->totalTime }}</td>
                     <td>
-                        {{-- ここで必ず詳細リンクを表示 --}}
                         @php
-                            // detail ルートの key は ID か日付文字列
-                            $key = $att->id
-                                   ? $att->id
-                                   : $att->created_at->format('Y-m-d');
+                            $key = $att->id ?: $att->created_at->format('Y-m-d');
                         @endphp
                         <a href="{{ route('admin.attendance.detail', ['key' => $key]) }}?staff_id={{ $staff->id }}"
                            class="adminattstaff-link">
@@ -82,11 +78,20 @@
                 </tr>
             @empty
                 <tr>
-                  <td colspan="6" class="text-center">該当する勤怠データがありません。</td>
+                    <td colspan="6" class="text-center">該当する勤怠データがありません。</td>
                 </tr>
             @endforelse
             </tbody>
         </table>
+
+        {{-- ▼ CSV出力ボタン（右下） --}}
+        <div style="text-align: right; margin-top: 1rem;">
+            <a href="{{ route('admin.attendance.staff.export', ['id' => $staff->id]) }}?month={{ $monthTop->format('Y-m') }}"
+               style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; border-radius: 4px; text-decoration: none;">
+                CSV出力
+            </a>
+        </div>
+
     </div>
 
 </div>
