@@ -11,6 +11,21 @@ Laravel環境構築
 ・php artisan migrate
 ・php artisan db:seed
 
+.env の変更内容
+# アプリ基本設定
+APP_NAME=Laravel
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost
+
+# データベース
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel_db
+DB_USERNAME=laravel_user
+DB_PASSWORD=laravel_pass
+
 開発環境
 打刻トップ	http://localhost/
 ユーザー登録	http://localhost/register	
