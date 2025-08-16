@@ -14,8 +14,7 @@ use App\Http\Requests\AttendanceRequest;
 use App\Http\Requests\AdminLoginRequest;
 
 /* =========================================================
-|  トップページ
-|  テストで `GET /` に 200 を返す必要があるため、OK レスポンスを返します
+|  トップページ（疎通確認用）
 ========================================================= */
 Route::get('/', function () {
     return response('OK', 200);
@@ -24,7 +23,6 @@ Route::get('/', function () {
 /* =========================================================
 |  一般ユーザー：登録 & ログイン
 ========================================================= */
-
 Route::get('/register', fn () => view('register'))->name('register.form');
 
 Route::post('/register', function (RegisterRequest $r) {
@@ -60,8 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/attendance',               [AttendanceController::class, 'index'])->name('attendance');
     Route::post('/attendance/clock',        [AttendanceController::class, 'clock'])->name('attendance.clock');
     Route::get('/attendance/list',          [AttendanceController::class, 'list'])->name('attendance.list');
-    Route::get('/attendance/{key}',         [AttendanceController::class, 'detail'])
-         ->name('attendance.detail');
+    Route::get('/attendance/{key}',         [AttendanceController::class, 'detail'])->name('attendance.detail');
     Route::patch('/attendance/update/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
 
     /* ---------- 申請一覧（一般 / 管理者 共通の実体はここ） ---------- */
@@ -113,7 +110,7 @@ Route::post('/admin/login', function (AdminLoginRequest $r) {
 /* =========================================================
 |  管理者：保護ルート
 ========================================================= */
-Route::prefix('admin')->middleware('auth')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'can:admin-only'])->group(function () {
 
     /* ---------- 日次勤怠一覧 ---------- */
     Route::get('/attendance/list', function (Request $r) {
@@ -128,9 +125,13 @@ Route::prefix('admin')->middleware('auth')->group(function () {
             foreach ($users as $u) {
                 if ($u->is_dummy) {
                     $attendances->push((object)[
-                        'id' => null, 'user' => $u, 'created_at' => $sel,
-                        'clockIn' => '09:00', 'clockOut' => '18:00',
-                        'breakTime' => '1:00', 'totalTime' => '08:00',
+                        'id'         => null,
+                        'user'       => $u,
+                        'created_at' => $sel,
+                        'clockIn'    => '09:00',
+                        'clockOut'   => '18:00',
+                        'breakTime'  => '1:00',
+                        'totalTime'  => '08:00',
                     ]);
                     continue;
                 }
@@ -139,9 +140,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
                 }
 
                 $att = Attendance::with('breakRecords')
-                       ->where('user_id', $u->id)
-                       ->whereDate('date', $sel)
-                       ->first();
+                        ->where('user_id', $u->id)
+                        ->whereDate('date', $sel)
+                        ->first();
                 if (! $att) {
                     continue;
                 }
@@ -178,11 +179,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/attendance/staff/{id}', [AttendanceController::class, 'staffAttendance'])
          ->name('admin.attendance.staff');
 
-    /* ---------- 申請一覧 (管理者 URL からリダイレクト) ---------- */
-    Route::get('/stamp_correction_request/list', function (Request $r) {
-        return redirect()->route('stamp_correction_request.list', $r->query());
-    })->name('admin.stamp_correction_request.list');
-
     /* ---------- 修正申請承認 ---------- */
     Route::post('/stamp_correction_request/approve/{id}', function ($id) {
         $rev = RevisionRequest::where('id', $id)->where('status', 'pending')->firstOrFail();
@@ -195,17 +191,15 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         $att->save();
 
         // 休憩更新
-$att->breakRecords()->delete();
-
-// $rev->breaks は JSON 文字列なので、一旦デコード
-$breaks = json_decode($rev->breaks, true) ?: [];
-
-foreach ($breaks as $bk) {
-    $att->breakRecords()->create([
-        'break_start' => $bk['start'] ?: null,
-        'break_end'   => $bk['end']   ?: null,
-    ]);
-}
+        $att->breakRecords()->delete();
+        // $rev->breaks は JSON 文字列想定
+        $breaks = json_decode($rev->breaks, true) ?: [];
+        foreach ($breaks as $bk) {
+            $att->breakRecords()->create([
+                'break_start' => $bk['start'] ?: null,
+                'break_end'   => $bk['end']   ?: null,
+            ]);
+        }
 
         // ステータス変更
         $rev->status = 'approved';
@@ -220,6 +214,18 @@ foreach ($breaks as $bk) {
         return view('admin_staff_list', compact('staff'));
     })->name('admin.staff.list');
 
+    /* ---------- 管理者：勤怠の直接修正（既存レコード更新） ---------- */
+    Route::post('/attendance/update/{id}', [AttendanceController::class, 'adminUpdate'])
+        ->name('admin.attendance.update');
+
+    /* ---------- 管理者：勤怠の直接修正（レコードが無い日の upsert） ---------- */
+    Route::post('/attendance/update', [AttendanceController::class, 'adminUpsert'])
+        ->name('admin.attendance.upsert');
+
+    /* ---------- 管理者：スタッフ勤怠 CSV エクスポート ---------- */
+    Route::get('/attendance/staff/{id}/export', [AttendanceController::class, 'exportStaffCsv'])
+        ->name('admin.attendance.staff.export');
+
     /* ---------- 管理者ログアウト ---------- */
     Route::post('/logout', function () {
         Auth::logout();
@@ -228,12 +234,3 @@ foreach ($breaks as $bk) {
         return redirect('/admin/login');
     })->name('admin.logout');
 });
-
-/* =========================================================
-|  管理者向け：スタッフ勤怠 CSV エクスポート
-========================================================= */
-Route::get(
-    '/admin/attendance/staff/{id}/export',
-    [AttendanceController::class, 'exportStaffCsv']
-)->name('admin.attendance.staff.export')
-  ->middleware('auth');

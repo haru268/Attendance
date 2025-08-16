@@ -26,6 +26,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'is_dummy'          => 'boolean',   
+        'is_dummy'          => 'boolean', 
+        'is_admin'          => 'boolean',  
     ];
 }

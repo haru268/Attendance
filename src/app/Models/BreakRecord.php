@@ -20,8 +20,8 @@ class BreakRecord extends Model
     ];
 
     protected $casts = [
-        'break_start' => 'datetime:H:i',
-        'break_end'   => 'datetime:H:i',
+        'break_start' => 'datetime',
+        'break_end'   => 'datetime',
     ];
 
     /**
